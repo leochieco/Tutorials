@@ -1,0 +1,23 @@
+********************************************************************************
+*
+* Input: force represented by voltage source 'Vin' (1 V = 1 N)
+*
+********************************************************************************
+
+.subckt SENSORE_PIEZO Vin 0 Vout
+
+* Modello piezo realistico
+.param S		4e-12  	; sensitivity 4 pC/N
+.param Cpie		33e-12  ; piezo capacitance 33pF
+.param Rleak	10G    	; leakage resistance 10G
+.ic V(Cpie)=0
+
+* Current = S *dV/dt
+Gpie  Vout 0 value={S*ddt(V(Vin))}
+Cpie  Vout 0 {Cpie}
+Rleak Vout 0 {Rleak}
+
+.END
+
+
+

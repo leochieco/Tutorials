@@ -1,0 +1,57 @@
+
+*  ---------------------------------------------------------------------------------------------------------------------------
+* | Based on:                                                                                                                 |
+* | "SPICE model of thermoelectric elements including thermal effects"                                                        |
+* | February 2000Conference Record - IEEE Instrumentation and Measurement Technology Conference 2:1019 - 1023 vol.2           |
+* | DOI: 10.1109/IMTC.2000.848895                         																	  |
+* | Conference: Instrumentation and Measurement Technology Conference, 2000. IMTC 2000. Proceedings of the 17th IEEEVolume: 2 |
+*  ---------------------------------------------------------------------------------------------------------------------------
+
+.subckt PELTIER_THERMAL_MASS H C P N 0 F
+
+.PARAM TAMB=296.4, SE=0.05292, RM=1.806
+.IC V(1)={TAMB} V(2)={TAMB} V(3)={TAMB} V(4)={TAMB}
+
+
+*=======================================
+*    		THERMAL CIRCUIT
+*=======================================
+*
+* HEAT SINK
+*
+ETAMB 3 0 value={TAMB}
+RKRAD 4 3 0.34
+CRAD 4 0 340
+RSILH 4 1 0.143
+*
+* PELTIER MODEL
+*
+CH 1 0 2
+GPE 0 1 VALUE={I(VPOS)*(I(VPOS)*RM+SE*
++(V(1)-V(2)))}
+RKM 1 2 1.768
+GPX 2 1 VALUE={I(VPOS)*
++(SE*V(2)-RM*I(VPOS)/2)}
+CC 2 0 2
+*
+* THERMAL MASS
+*
+RSILC F 2 0.143
+CCONINT F 0 304
+RCONINT F 3 3.1
+*
+*
+*
+*=======================================
+*         ELECTRICAL CIRCUIT
+*=======================================
+VPOS P 13 DC 0
+RM 13 12 0.1
+EALPHA 12 N VALUE = {SE*(V(1)-V(2))}
+
+ETH H 0 VALUE={V(4)-273.15}
+ETC C 0 VALUE={V(F)-273.15}
+*
+*
+.END
+
