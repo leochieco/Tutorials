@@ -1,0 +1,16 @@
+-mjwx
+-i ../build/rom.ihx
+-b _CODE = 0x0200
+-b _DATA = 0x2000
+-b_CSTUB=0x1900
+-k D:\SDCC\bin\..\lib\z80
+-l z80
+../build/crt0.rel
+../build/io.rel
+../build/serial.rel
+../build/monitor.rel
+../build/main.rel
+../build/asm_test.rel
+../build/c_test.rel
+
+-e

@@ -1,0 +1,625 @@
+                                      1 ;--------------------------------------------------------
+                                      2 ; File Created by SDCC : free open source ISO C Compiler 
+                                      3 ; Version 4.3.0 #14184 (MINGW64)
+                                      4 ;--------------------------------------------------------
+                                      5 	.module c_test
+                                      6 	.optsdcc -mz80
+                                      7 	
+                                      8 ;--------------------------------------------------------
+                                      9 ; Public variables in this module
+                                     10 ;--------------------------------------------------------
+                                     11 	.globl _start
+                                     12 	.globl _serial_putc
+                                     13 	.globl _serial_getc
+                                     14 	.globl _tris
+                                     15 ;--------------------------------------------------------
+                                     16 ; special function registers
+                                     17 ;--------------------------------------------------------
+                                     18 ;--------------------------------------------------------
+                                     19 ; ram data
+                                     20 ;--------------------------------------------------------
+                                     21 	.area _DATA
+      000000                         22 _board:
+      000000                         23 	.ds 9
+                                     24 ;--------------------------------------------------------
+                                     25 ; ram data
+                                     26 ;--------------------------------------------------------
+                                     27 	.area _INITIALIZED
+                                     28 ;--------------------------------------------------------
+                                     29 ; absolute external ram data
+                                     30 ;--------------------------------------------------------
+                                     31 	.area _DABS (ABS)
+                                     32 ;--------------------------------------------------------
+                                     33 ; global & static initialisations
+                                     34 ;--------------------------------------------------------
+                                     35 	.area _HOME
+                                     36 	.area _GSINIT
+                                     37 	.area _GSFINAL
+                                     38 	.area _GSINIT
+                                     39 ;--------------------------------------------------------
+                                     40 ; Home
+                                     41 ;--------------------------------------------------------
+                                     42 	.area _HOME
+                                     43 	.area _HOME
+                                     44 ;--------------------------------------------------------
+                                     45 ; code
+                                     46 ;--------------------------------------------------------
+                                     47 	.area _CSTUB
+                                     48 ;c_test.c:21: void start(void){
+                                     49 ;	---------------------------------
+                                     50 ; Function start
+                                     51 ; ---------------------------------
+      000000                         52 _start::
+                                     53 ;c_test.c:22: tris();
+                                     54 ;c_test.c:23: }
+      000000 C3rEDr02         [10]   55 	jp	_tris
+                                     56 ;c_test.c:28: static void puts(const char *s) {
+                                     57 ;	---------------------------------
+                                     58 ; Function puts
+                                     59 ; ---------------------------------
+      000003                         60 _puts:
+                                     61 ;c_test.c:29: while (*s) serial_putc(*s++);
+      000003                         62 00101$:
+      000003 7E               [ 7]   63 	ld	a, (hl)
+      000004 B7               [ 4]   64 	or	a, a
+      000005 C8               [11]   65 	ret	Z
+      000006 23               [ 6]   66 	inc	hl
+      000007 4F               [ 4]   67 	ld	c, a
+      000008 E5               [11]   68 	push	hl
+      000009 79               [ 4]   69 	ld	a, c
+      00000A CDr00r00         [17]   70 	call	_serial_putc
+      00000D E1               [10]   71 	pop	hl
+                                     72 ;c_test.c:30: }
+      00000E 18 F3            [12]   73 	jr	00101$
+                                     74 ;c_test.c:41: static void draw_board(void) {
+                                     75 ;	---------------------------------
+                                     76 ; Function draw_board
+                                     77 ; ---------------------------------
+      000010                         78 _draw_board:
+      000010 DD E5            [15]   79 	push	ix
+      000012 DD 21 00 00      [14]   80 	ld	ix,#0
+      000016 DD 39            [15]   81 	add	ix,sp
+      000018 F5               [11]   82 	push	af
+                                     83 ;c_test.c:43: for (int i = 0; i < 9; i++) {
+      000019 21 00 00         [10]   84 	ld	hl, #0x0000
+      00001C E3               [19]   85 	ex	(sp), hl
+      00001D                         86 00106$:
+      00001D DD 7E FE         [19]   87 	ld	a, -2 (ix)
+      000020 D6 09            [ 7]   88 	sub	a, #0x09
+      000022 DD 7E FF         [19]   89 	ld	a, -1 (ix)
+      000025 17               [ 4]   90 	rla
+      000026 3F               [ 4]   91 	ccf
+      000027 1F               [ 4]   92 	rra
+      000028 DE 80            [ 7]   93 	sbc	a, #0x80
+      00002A 30 41            [12]   94 	jr	NC, 00104$
+                                     95 ;c_test.c:44: char c = board[i] ? board[i] : ('0' + i);
+      00002C 3Er00            [ 7]   96 	ld	a, #<(_board)
+      00002E DD 86 FE         [19]   97 	add	a, -2 (ix)
+      000031 6F               [ 4]   98 	ld	l, a
+                                     99 ;	spillPairReg hl
+                                    100 ;	spillPairReg hl
+      000032 3Es00            [ 7]  101 	ld	a, #>(_board)
+      000034 DD 8E FF         [19]  102 	adc	a, -1 (ix)
+      000037 67               [ 4]  103 	ld	h, a
+      000038 4E               [ 7]  104 	ld	c, (hl)
+      000039 79               [ 4]  105 	ld	a, c
+      00003A B7               [ 4]  106 	or	a, a
+      00003B 20 06            [12]  107 	jr	NZ, 00111$
+      00003D DD 7E FE         [19]  108 	ld	a, -2 (ix)
+      000040 C6 30            [ 7]  109 	add	a, #0x30
+      000042 4F               [ 4]  110 	ld	c, a
+      000043                        111 00111$:
+                                    112 ;c_test.c:45: serial_putc(c);
+      000043 79               [ 4]  113 	ld	a, c
+      000044 CDr00r00         [17]  114 	call	_serial_putc
+                                    115 ;c_test.c:46: if ((i % 3) == 2) puts("\r\n");
+      000047 11 03 00         [10]  116 	ld	de, #0x0003
+      00004A E1               [10]  117 	pop	hl
+      00004B E5               [11]  118 	push	hl
+      00004C CDr00r00         [17]  119 	call	__modsint
+      00004F 7B               [ 4]  120 	ld	a, e
+      000050 D6 02            [ 7]  121 	sub	a, #0x02
+      000052 B2               [ 4]  122 	or	a, d
+      000053 20 08            [12]  123 	jr	NZ, 00102$
+      000055 21rDEr00         [10]  124 	ld	hl, #___str_1
+      000058 CDr03r00         [17]  125 	call	_puts
+      00005B 18 06            [12]  126 	jr	00107$
+      00005D                        127 00102$:
+                                    128 ;c_test.c:47: else puts(sep);
+      00005D 21rDCr00         [10]  129 	ld	hl, #_draw_board_sep_65536_12
+      000060 CDr03r00         [17]  130 	call	_puts
+      000063                        131 00107$:
+                                    132 ;c_test.c:43: for (int i = 0; i < 9; i++) {
+      000063 DD 34 FE         [23]  133 	inc	-2 (ix)
+      000066 20 B5            [12]  134 	jr	NZ, 00106$
+      000068 DD 34 FF         [23]  135 	inc	-1 (ix)
+      00006B 18 B0            [12]  136 	jr	00106$
+      00006D                        137 00104$:
+                                    138 ;c_test.c:49: puts("\r\n");
+      00006D 21rDEr00         [10]  139 	ld	hl, #___str_1
+      000070 CDr03r00         [17]  140 	call	_puts
+                                    141 ;c_test.c:50: }
+      000073 DD F9            [10]  142 	ld	sp, ix
+      000075 DD E1            [14]  143 	pop	ix
+      000077 C9               [10]  144 	ret
+      000078                        145 _intro:
+      000078 54 49 43 2D 54 41 43   146 	.ascii "TIC-TAC-TOE ASCII"
+             2D 54 4F 45 20 41 53
+             43 49 49
+      000089 0D                     147 	.db 0x0d
+      00008A 0A                     148 	.db 0x0a
+      00008B 00                     149 	.db 0x00
+      00008C                        150 _instructions:
+      00008C 59 6F 75 20 70 6C 61   151 	.ascii "You play X, CPU O"
+             79 20 58 2C 20 43 50
+             55 20 4F
+      00009D 0D                     152 	.db 0x0d
+      00009E 0A                     153 	.db 0x0a
+      00009F 43 68 6F 6F 73 65 20   154 	.ascii "Choose cell 0-8"
+             63 65 6C 6C 20 30 2D
+             38
+      0000AE 0D                     155 	.db 0x0d
+      0000AF 0A                     156 	.db 0x0a
+      0000B0 00                     157 	.db 0x00
+      0000B1                        158 _prompt:
+      0000B1 59 6F 75 72 20 6D 6F   159 	.ascii "Your move: "
+             76 65 3A 20
+      0000BC 00                     160 	.db 0x00
+      0000BD                        161 _win_user:
+      0000BD 59 6F 75 20 77 69 6E   162 	.ascii "You win!"
+             21
+      0000C5 0D                     163 	.db 0x0d
+      0000C6 0A                     164 	.db 0x0a
+      0000C7 00                     165 	.db 0x00
+      0000C8                        166 _win_cpu:
+      0000C8 43 50 55 20 77 69 6E   167 	.ascii "CPU wins!"
+             73 21
+      0000D1 0D                     168 	.db 0x0d
+      0000D2 0A                     169 	.db 0x0a
+      0000D3 00                     170 	.db 0x00
+      0000D4                        171 _draw_msg:
+      0000D4 44 72 61 77 21         172 	.ascii "Draw!"
+      0000D9 0D                     173 	.db 0x0d
+      0000DA 0A                     174 	.db 0x0a
+      0000DB 00                     175 	.db 0x00
+      0000DC                        176 _draw_board_sep_65536_12:
+      0000DC 7C                     177 	.ascii "|"
+      0000DD 00                     178 	.db 0x00
+      0000DE                        179 ___str_1:
+      0000DE 0D                     180 	.db 0x0d
+      0000DF 0A                     181 	.db 0x0a
+      0000E0 00                     182 	.db 0x00
+                                    183 ;c_test.c:53: static char check_win(void) {
+                                    184 ;	---------------------------------
+                                    185 ; Function check_win
+                                    186 ; ---------------------------------
+      0000E1                        187 _check_win:
+      0000E1 DD E5            [15]  188 	push	ix
+      0000E3 DD 21 00 00      [14]  189 	ld	ix,#0
+      0000E7 DD 39            [15]  190 	add	ix,sp
+      0000E9 21 CC FF         [10]  191 	ld	hl, #-52
+      0000EC 39               [11]  192 	add	hl, sp
+      0000ED F9               [ 6]  193 	ld	sp, hl
+                                    194 ;c_test.c:54: const int lines[8][3] = {
+      0000EE AF               [ 4]  195 	xor	a, a
+      0000EF DD 77 CC         [19]  196 	ld	-52 (ix), a
+      0000F2 DD 77 CD         [19]  197 	ld	-51 (ix), a
+      0000F5 DD 36 CE 01      [19]  198 	ld	-50 (ix), #0x01
+      0000F9 DD 36 CF 00      [19]  199 	ld	-49 (ix), #0
+      0000FD DD 36 D0 02      [19]  200 	ld	-48 (ix), #0x02
+      000101 DD 36 D1 00      [19]  201 	ld	-47 (ix), #0
+      000105 21 00 00         [10]  202 	ld	hl, #0
+      000108 39               [11]  203 	add	hl, sp
+      000109 4D               [ 4]  204 	ld	c, l
+      00010A 44               [ 4]  205 	ld	b, h
+      00010B DD 36 D2 03      [19]  206 	ld	-46 (ix), #0x03
+      00010F DD 36 D3 00      [19]  207 	ld	-45 (ix), #0
+      000113 DD 36 D4 04      [19]  208 	ld	-44 (ix), #0x04
+      000117 DD 36 D5 00      [19]  209 	ld	-43 (ix), #0
+      00011B DD 36 D6 05      [19]  210 	ld	-42 (ix), #0x05
+      00011F DD 36 D7 00      [19]  211 	ld	-41 (ix), #0
+      000123 DD 36 D8 06      [19]  212 	ld	-40 (ix), #0x06
+      000127 DD 36 D9 00      [19]  213 	ld	-39 (ix), #0
+      00012B DD 36 DA 07      [19]  214 	ld	-38 (ix), #0x07
+      00012F DD 36 DB 00      [19]  215 	ld	-37 (ix), #0
+      000133 DD 36 DC 08      [19]  216 	ld	-36 (ix), #0x08
+      000137 DD 36 DD 00      [19]  217 	ld	-35 (ix), #0
+      00013B AF               [ 4]  218 	xor	a, a
+      00013C DD 77 DE         [19]  219 	ld	-34 (ix), a
+      00013F DD 77 DF         [19]  220 	ld	-33 (ix), a
+      000142 DD 36 E0 03      [19]  221 	ld	-32 (ix), #0x03
+      000146 DD 36 E1 00      [19]  222 	ld	-31 (ix), #0
+      00014A DD 36 E2 06      [19]  223 	ld	-30 (ix), #0x06
+      00014E DD 36 E3 00      [19]  224 	ld	-29 (ix), #0
+      000152 DD 36 E4 01      [19]  225 	ld	-28 (ix), #0x01
+      000156 DD 36 E5 00      [19]  226 	ld	-27 (ix), #0
+      00015A DD 36 E6 04      [19]  227 	ld	-26 (ix), #0x04
+      00015E DD 36 E7 00      [19]  228 	ld	-25 (ix), #0
+      000162 DD 36 E8 07      [19]  229 	ld	-24 (ix), #0x07
+      000166 DD 36 E9 00      [19]  230 	ld	-23 (ix), #0
+      00016A DD 36 EA 02      [19]  231 	ld	-22 (ix), #0x02
+      00016E DD 36 EB 00      [19]  232 	ld	-21 (ix), #0
+      000172 DD 36 EC 05      [19]  233 	ld	-20 (ix), #0x05
+      000176 DD 36 ED 00      [19]  234 	ld	-19 (ix), #0
+      00017A DD 36 EE 08      [19]  235 	ld	-18 (ix), #0x08
+      00017E DD 36 EF 00      [19]  236 	ld	-17 (ix), #0
+      000182 AF               [ 4]  237 	xor	a, a
+      000183 DD 77 F0         [19]  238 	ld	-16 (ix), a
+      000186 DD 77 F1         [19]  239 	ld	-15 (ix), a
+      000189 DD 36 F2 04      [19]  240 	ld	-14 (ix), #0x04
+      00018D DD 36 F3 00      [19]  241 	ld	-13 (ix), #0
+      000191 DD 36 F4 08      [19]  242 	ld	-12 (ix), #0x08
+      000195 DD 36 F5 00      [19]  243 	ld	-11 (ix), #0
+      000199 DD 36 F6 02      [19]  244 	ld	-10 (ix), #0x02
+      00019D DD 36 F7 00      [19]  245 	ld	-9 (ix), #0
+      0001A1 DD 36 F8 04      [19]  246 	ld	-8 (ix), #0x04
+      0001A5 DD 36 F9 00      [19]  247 	ld	-7 (ix), #0
+      0001A9 DD 36 FA 06      [19]  248 	ld	-6 (ix), #0x06
+      0001AD DD 36 FB 00      [19]  249 	ld	-5 (ix), #0
+                                    250 ;c_test.c:59: for (int i=0;i<8;i++) {
+      0001B1 11r00r00         [10]  251 	ld	de, #_board+0
+      0001B4 AF               [ 4]  252 	xor	a, a
+      0001B5 DD 77 FE         [19]  253 	ld	-2 (ix), a
+      0001B8 DD 77 FF         [19]  254 	ld	-1 (ix), a
+      0001BB                        255 00110$:
+      0001BB DD 7E FE         [19]  256 	ld	a, -2 (ix)
+      0001BE D6 08            [ 7]  257 	sub	a, #0x08
+      0001C0 DD 7E FF         [19]  258 	ld	a, -1 (ix)
+      0001C3 17               [ 4]  259 	rla
+      0001C4 3F               [ 4]  260 	ccf
+      0001C5 1F               [ 4]  261 	rra
+      0001C6 DE 80            [ 7]  262 	sbc	a, #0x80
+      0001C8 30 5A            [12]  263 	jr	NC, 00124$
+                                    264 ;c_test.c:60: char a=board[lines[i][0]];
+      0001CA D5               [11]  265 	push	de
+      0001CB DD 5E FE         [19]  266 	ld	e, -2 (ix)
+      0001CE DD 56 FF         [19]  267 	ld	d, -1 (ix)
+      0001D1 6B               [ 4]  268 	ld	l, e
+      0001D2 62               [ 4]  269 	ld	h, d
+      0001D3 29               [11]  270 	add	hl, hl
+      0001D4 19               [11]  271 	add	hl, de
+      0001D5 29               [11]  272 	add	hl, hl
+      0001D6 D1               [10]  273 	pop	de
+      0001D7 09               [11]  274 	add	hl, bc
+      0001D8 E5               [11]  275 	push	hl
+      0001D9 FD E1            [14]  276 	pop	iy
+      0001DB FD 6E 00         [19]  277 	ld	l, 0 (iy)
+                                    278 ;	spillPairReg hl
+      0001DE FD 66 01         [19]  279 	ld	h, 1 (iy)
+                                    280 ;	spillPairReg hl
+      0001E1 19               [11]  281 	add	hl, de
+      0001E2 7E               [ 7]  282 	ld	a, (hl)
+      0001E3 DD 77 FC         [19]  283 	ld	-4 (ix), a
+                                    284 ;c_test.c:61: char b=board[lines[i][1]];
+      0001E6 FD E5            [15]  285 	push	iy
+      0001E8 E1               [10]  286 	pop	hl
+      0001E9 23               [ 6]  287 	inc	hl
+      0001EA 23               [ 6]  288 	inc	hl
+      0001EB 7E               [ 7]  289 	ld	a, (hl)
+      0001EC 23               [ 6]  290 	inc	hl
+      0001ED 66               [ 7]  291 	ld	h, (hl)
+                                    292 ;	spillPairReg hl
+      0001EE 6F               [ 4]  293 	ld	l, a
+                                    294 ;	spillPairReg hl
+                                    295 ;	spillPairReg hl
+      0001EF 19               [11]  296 	add	hl, de
+      0001F0 7E               [ 7]  297 	ld	a, (hl)
+      0001F1 DD 77 FD         [19]  298 	ld	-3 (ix), a
+                                    299 ;c_test.c:62: char c=board[lines[i][2]];
+      0001F4 FD E5            [15]  300 	push	iy
+      0001F6 E1               [10]  301 	pop	hl
+      0001F7 23               [ 6]  302 	inc	hl
+      0001F8 23               [ 6]  303 	inc	hl
+      0001F9 23               [ 6]  304 	inc	hl
+      0001FA 23               [ 6]  305 	inc	hl
+      0001FB 7E               [ 7]  306 	ld	a, (hl)
+      0001FC 23               [ 6]  307 	inc	hl
+      0001FD 66               [ 7]  308 	ld	h, (hl)
+                                    309 ;	spillPairReg hl
+      0001FE 6F               [ 4]  310 	ld	l, a
+                                    311 ;	spillPairReg hl
+                                    312 ;	spillPairReg hl
+      0001FF 19               [11]  313 	add	hl, de
+      000200 6E               [ 7]  314 	ld	l, (hl)
+                                    315 ;	spillPairReg hl
+                                    316 ;c_test.c:63: if(a && a==b && b==c) return a;
+      000201 DD 7E FC         [19]  317 	ld	a, -4 (ix)
+      000204 B7               [ 4]  318 	or	a, a
+      000205 28 13            [12]  319 	jr	Z, 00111$
+      000207 DD 7E FC         [19]  320 	ld	a, -4 (ix)
+      00020A DD 96 FD         [19]  321 	sub	a, -3 (ix)
+      00020D 20 0B            [12]  322 	jr	NZ, 00111$
+      00020F DD 7E FD         [19]  323 	ld	a, -3 (ix)
+      000212 95               [ 4]  324 	sub	a, l
+      000213 20 05            [12]  325 	jr	NZ, 00111$
+      000215 DD 7E FC         [19]  326 	ld	a, -4 (ix)
+      000218 18 24            [12]  327 	jr	00115$
+      00021A                        328 00111$:
+                                    329 ;c_test.c:59: for (int i=0;i<8;i++) {
+      00021A DD 34 FE         [23]  330 	inc	-2 (ix)
+      00021D 20 9C            [12]  331 	jr	NZ, 00110$
+      00021F DD 34 FF         [23]  332 	inc	-1 (ix)
+      000222 18 97            [12]  333 	jr	00110$
+                                    334 ;c_test.c:65: for(int i=0;i<9;i++) if(!board[i]) return 0;
+      000224                        335 00124$:
+      000224 01 00 00         [10]  336 	ld	bc, #0x0000
+      000227                        337 00113$:
+      000227 79               [ 4]  338 	ld	a, c
+      000228 D6 09            [ 7]  339 	sub	a, #0x09
+      00022A 78               [ 4]  340 	ld	a, b
+      00022B 17               [ 4]  341 	rla
+      00022C 3F               [ 4]  342 	ccf
+      00022D 1F               [ 4]  343 	rra
+      00022E DE 80            [ 7]  344 	sbc	a, #0x80
+      000230 30 0A            [12]  345 	jr	NC, 00108$
+      000232 6B               [ 4]  346 	ld	l, e
+      000233 62               [ 4]  347 	ld	h, d
+      000234 09               [11]  348 	add	hl, bc
+      000235 7E               [ 7]  349 	ld	a, (hl)
+      000236 B7               [ 4]  350 	or	a,a
+      000237 28 05            [12]  351 	jr	Z, 00115$
+      000239 03               [ 6]  352 	inc	bc
+      00023A 18 EB            [12]  353 	jr	00113$
+      00023C                        354 00108$:
+                                    355 ;c_test.c:66: return 'D'; // Draw
+      00023C 3E 44            [ 7]  356 	ld	a, #0x44
+      00023E                        357 00115$:
+                                    358 ;c_test.c:67: }
+      00023E DD F9            [10]  359 	ld	sp, ix
+      000240 DD E1            [14]  360 	pop	ix
+      000242 C9               [10]  361 	ret
+                                    362 ;c_test.c:70: static int cpu_move(void) {
+                                    363 ;	---------------------------------
+                                    364 ; Function cpu_move
+                                    365 ; ---------------------------------
+      000243                        366 _cpu_move:
+                                    367 ;c_test.c:71: for(int i=0;i<9;i++) {
+      000243 11 00 00         [10]  368 	ld	de, #0x0000
+      000246 42               [ 4]  369 	ld	b, d
+      000247 4B               [ 4]  370 	ld	c, e
+      000248                        371 00115$:
+      000248 79               [ 4]  372 	ld	a, c
+      000249 D6 09            [ 7]  373 	sub	a, #0x09
+      00024B 78               [ 4]  374 	ld	a, b
+      00024C 17               [ 4]  375 	rla
+      00024D 3F               [ 4]  376 	ccf
+      00024E 1F               [ 4]  377 	rra
+      00024F DE 80            [ 7]  378 	sbc	a, #0x80
+      000251 30 1D            [12]  379 	jr	NC, 00105$
+                                    380 ;c_test.c:72: if(!board[i]) { board[i]='O'; if(check_win()=='O') return i; board[i]=0; }
+      000253 21r00r00         [10]  381 	ld	hl, #_board+0
+      000256 09               [11]  382 	add	hl, bc
+      000257 7E               [ 7]  383 	ld	a, (hl)
+      000258 B7               [ 4]  384 	or	a, a
+      000259 20 10            [12]  385 	jr	NZ, 00116$
+      00025B 36 4F            [10]  386 	ld	(hl), #0x4f
+      00025D E5               [11]  387 	push	hl
+      00025E C5               [11]  388 	push	bc
+      00025F D5               [11]  389 	push	de
+      000260 CDrE1r00         [17]  390 	call	_check_win
+      000263 D1               [10]  391 	pop	de
+      000264 C1               [10]  392 	pop	bc
+      000265 E1               [10]  393 	pop	hl
+      000266 D6 4F            [ 7]  394 	sub	a, #0x4f
+      000268 C8               [11]  395 	ret	Z
+      000269 36 00            [10]  396 	ld	(hl), #0x00
+      00026B                        397 00116$:
+                                    398 ;c_test.c:71: for(int i=0;i<9;i++) {
+      00026B 03               [ 6]  399 	inc	bc
+      00026C 59               [ 4]  400 	ld	e, c
+      00026D 50               [ 4]  401 	ld	d, b
+      00026E 18 D8            [12]  402 	jr	00115$
+      000270                        403 00105$:
+                                    404 ;c_test.c:74: for(int i=0;i<9;i++) {
+      000270 11 00 00         [10]  405 	ld	de, #0x0000
+      000273 42               [ 4]  406 	ld	b, d
+      000274 4B               [ 4]  407 	ld	c, e
+      000275                        408 00118$:
+      000275 79               [ 4]  409 	ld	a, c
+      000276 D6 09            [ 7]  410 	sub	a, #0x09
+      000278 78               [ 4]  411 	ld	a, b
+      000279 17               [ 4]  412 	rla
+      00027A 3F               [ 4]  413 	ccf
+      00027B 1F               [ 4]  414 	rra
+      00027C DE 80            [ 7]  415 	sbc	a, #0x80
+      00027E 30 21            [12]  416 	jr	NC, 00110$
+                                    417 ;c_test.c:75: if(!board[i]) { board[i]='X'; if(check_win()=='X') { board[i]='O'; return i; } board[i]=0; }
+      000280 21r00r00         [10]  418 	ld	hl, #_board+0
+      000283 09               [11]  419 	add	hl, bc
+      000284 7E               [ 7]  420 	ld	a, (hl)
+      000285 B7               [ 4]  421 	or	a, a
+      000286 20 14            [12]  422 	jr	NZ, 00119$
+      000288 36 58            [10]  423 	ld	(hl), #0x58
+      00028A E5               [11]  424 	push	hl
+      00028B C5               [11]  425 	push	bc
+      00028C D5               [11]  426 	push	de
+      00028D CDrE1r00         [17]  427 	call	_check_win
+      000290 D1               [10]  428 	pop	de
+      000291 C1               [10]  429 	pop	bc
+      000292 E1               [10]  430 	pop	hl
+      000293 D6 58            [ 7]  431 	sub	a, #0x58
+      000295 20 03            [12]  432 	jr	NZ, 00107$
+      000297 36 4F            [10]  433 	ld	(hl), #0x4f
+      000299 C9               [10]  434 	ret
+      00029A                        435 00107$:
+      00029A 36 00            [10]  436 	ld	(hl), #0x00
+      00029C                        437 00119$:
+                                    438 ;c_test.c:74: for(int i=0;i<9;i++) {
+      00029C 03               [ 6]  439 	inc	bc
+      00029D 59               [ 4]  440 	ld	e, c
+      00029E 50               [ 4]  441 	ld	d, b
+      00029F 18 D4            [12]  442 	jr	00118$
+      0002A1                        443 00110$:
+                                    444 ;c_test.c:77: for(int i=0;i<9;i++) if(!board[i]) { board[i]='O'; return i; }
+      0002A1 11 00 00         [10]  445 	ld	de, #0x0000
+      0002A4 42               [ 4]  446 	ld	b, d
+      0002A5 4B               [ 4]  447 	ld	c, e
+      0002A6                        448 00121$:
+      0002A6 79               [ 4]  449 	ld	a, c
+      0002A7 D6 09            [ 7]  450 	sub	a, #0x09
+      0002A9 78               [ 4]  451 	ld	a, b
+      0002AA 17               [ 4]  452 	rla
+      0002AB 3F               [ 4]  453 	ccf
+      0002AC 1F               [ 4]  454 	rra
+      0002AD DE 80            [ 7]  455 	sbc	a, #0x80
+      0002AF 30 10            [12]  456 	jr	NC, 00113$
+      0002B1 21r00r00         [10]  457 	ld	hl, #_board+0
+      0002B4 09               [11]  458 	add	hl, bc
+      0002B5 7E               [ 7]  459 	ld	a, (hl)
+      0002B6 B7               [ 4]  460 	or	a, a
+      0002B7 20 03            [12]  461 	jr	NZ, 00122$
+      0002B9 36 4F            [10]  462 	ld	(hl), #0x4f
+      0002BB C9               [10]  463 	ret
+      0002BC                        464 00122$:
+      0002BC 03               [ 6]  465 	inc	bc
+      0002BD 59               [ 4]  466 	ld	e, c
+      0002BE 50               [ 4]  467 	ld	d, b
+      0002BF 18 E5            [12]  468 	jr	00121$
+      0002C1                        469 00113$:
+                                    470 ;c_test.c:78: return -1;
+      0002C1 11 FF FF         [10]  471 	ld	de, #0xffff
+                                    472 ;c_test.c:79: }
+      0002C4 C9               [10]  473 	ret
+                                    474 ;c_test.c:82: static int get_move(void) {
+                                    475 ;	---------------------------------
+                                    476 ; Function get_move
+                                    477 ; ---------------------------------
+      0002C5                        478 _get_move:
+                                    479 ;c_test.c:83: while (1) {
+      0002C5                        480 00105$:
+                                    481 ;c_test.c:84: char c = serial_getc();
+      0002C5 CDr00r00         [17]  482 	call	_serial_getc
+                                    483 ;c_test.c:85: if (c >= '0' && c <= '8') {
+      0002C8 4F               [ 4]  484 	ld	c, a
+      0002C9 D6 30            [ 7]  485 	sub	a, #0x30
+      0002CB 38 F8            [12]  486 	jr	C, 00105$
+      0002CD 3E 38            [ 7]  487 	ld	a, #0x38
+      0002CF 91               [ 4]  488 	sub	a, c
+      0002D0 38 F3            [12]  489 	jr	C, 00105$
+                                    490 ;c_test.c:86: serial_putc(c);       // mostra il carattere
+      0002D2 C5               [11]  491 	push	bc
+      0002D3 79               [ 4]  492 	ld	a, c
+      0002D4 CDr00r00         [17]  493 	call	_serial_putc
+      0002D7 3E 0D            [ 7]  494 	ld	a, #0x0d
+      0002D9 CDr00r00         [17]  495 	call	_serial_putc
+      0002DC 3E 0A            [ 7]  496 	ld	a, #0x0a
+      0002DE CDr00r00         [17]  497 	call	_serial_putc
+      0002E1 C1               [10]  498 	pop	bc
+                                    499 ;c_test.c:89: return c - '0';
+      0002E2 79               [ 4]  500 	ld	a, c
+      0002E3 0E 00            [ 7]  501 	ld	c, #0x00
+      0002E5 C6 D0            [ 7]  502 	add	a, #0xd0
+      0002E7 5F               [ 4]  503 	ld	e, a
+      0002E8 79               [ 4]  504 	ld	a, c
+      0002E9 CE FF            [ 7]  505 	adc	a, #0xff
+      0002EB 57               [ 4]  506 	ld	d, a
+                                    507 ;c_test.c:92: }
+      0002EC C9               [10]  508 	ret
+                                    509 ;c_test.c:97: void tris(void) {
+                                    510 ;	---------------------------------
+                                    511 ; Function tris
+                                    512 ; ---------------------------------
+      0002ED                        513 _tris::
+                                    514 ;c_test.c:99: for(int i=0;i<9;i++) board[i]=0;
+      0002ED 01 00 00         [10]  515 	ld	bc, #0x0000
+      0002F0                        516 00124$:
+      0002F0 79               [ 4]  517 	ld	a, c
+      0002F1 D6 09            [ 7]  518 	sub	a, #0x09
+      0002F3 78               [ 4]  519 	ld	a, b
+      0002F4 17               [ 4]  520 	rla
+      0002F5 3F               [ 4]  521 	ccf
+      0002F6 1F               [ 4]  522 	rra
+      0002F7 DE 80            [ 7]  523 	sbc	a, #0x80
+      0002F9 30 09            [12]  524 	jr	NC, 00101$
+      0002FB 21r00r00         [10]  525 	ld	hl, #_board
+      0002FE 09               [11]  526 	add	hl, bc
+      0002FF 36 00            [10]  527 	ld	(hl), #0x00
+      000301 03               [ 6]  528 	inc	bc
+      000302 18 EC            [12]  529 	jr	00124$
+      000304                        530 00101$:
+                                    531 ;c_test.c:102: puts(intro);
+      000304 21r78r00         [10]  532 	ld	hl, #_intro
+      000307 CDr03r00         [17]  533 	call	_puts
+                                    534 ;c_test.c:103: puts(instructions);
+      00030A 21r8Cr00         [10]  535 	ld	hl, #_instructions
+      00030D CDr03r00         [17]  536 	call	_puts
+                                    537 ;c_test.c:105: while(1) {
+      000310                        538 00121$:
+                                    539 ;c_test.c:106: draw_board();
+      000310 CDr10r00         [17]  540 	call	_draw_board
+                                    541 ;c_test.c:107: puts(prompt);
+      000313 21rB1r00         [10]  542 	ld	hl, #_prompt
+      000316 CDr03r00         [17]  543 	call	_puts
+                                    544 ;c_test.c:110: int move = get_move();
+      000319 CDrC5r02         [17]  545 	call	_get_move
+                                    546 ;c_test.c:111: if(board[move]) continue;
+      00031C 21r00r00         [10]  547 	ld	hl, #_board
+      00031F 19               [11]  548 	add	hl, de
+      000320 7E               [ 7]  549 	ld	a, (hl)
+      000321 B7               [ 4]  550 	or	a, a
+      000322 20 EC            [12]  551 	jr	NZ, 00121$
+                                    552 ;c_test.c:112: board[move]='X';
+      000324 36 58            [10]  553 	ld	(hl), #0x58
+                                    554 ;c_test.c:114: char result = check_win();
+      000326 CDrE1r00         [17]  555 	call	_check_win
+                                    556 ;c_test.c:115: if(result) {
+      000329 5F               [ 4]  557 	ld	e, a
+      00032A B7               [ 4]  558 	or	a, a
+      00032B 28 21            [12]  559 	jr	Z, 00111$
+                                    560 ;c_test.c:116: draw_board();
+      00032D D5               [11]  561 	push	de
+      00032E CDr10r00         [17]  562 	call	_draw_board
+      000331 D1               [10]  563 	pop	de
+                                    564 ;c_test.c:117: if(result=='X') puts(win_user);
+      000332 7B               [ 4]  565 	ld	a, e
+      000333 D6 58            [ 7]  566 	sub	a, #0x58
+      000335 20 06            [12]  567 	jr	NZ, 00108$
+      000337 21rBDr00         [10]  568 	ld	hl, #_win_user
+      00033A C3r03r00         [10]  569 	jp	_puts
+      00033D                        570 00108$:
+                                    571 ;c_test.c:118: else if(result=='O') puts(win_cpu);
+      00033D 7B               [ 4]  572 	ld	a, e
+      00033E D6 4F            [ 7]  573 	sub	a, #0x4f
+      000340 20 06            [12]  574 	jr	NZ, 00105$
+      000342 21rC8r00         [10]  575 	ld	hl, #_win_cpu
+      000345 C3r03r00         [10]  576 	jp	_puts
+      000348                        577 00105$:
+                                    578 ;c_test.c:119: else puts(draw_msg);
+      000348 21rD4r00         [10]  579 	ld	hl, #_draw_msg
+                                    580 ;c_test.c:120: return;
+      00034B C3r03r00         [10]  581 	jp	_puts
+      00034E                        582 00111$:
+                                    583 ;c_test.c:124: cpu_move();
+      00034E CDr43r02         [17]  584 	call	_cpu_move
+                                    585 ;c_test.c:126: result = check_win();
+      000351 CDrE1r00         [17]  586 	call	_check_win
+                                    587 ;c_test.c:127: if(result) {
+      000354 4F               [ 4]  588 	ld	c, a
+      000355 B7               [ 4]  589 	or	a, a
+      000356 28 B8            [12]  590 	jr	Z, 00121$
+                                    591 ;c_test.c:128: draw_board();
+      000358 C5               [11]  592 	push	bc
+      000359 CDr10r00         [17]  593 	call	_draw_board
+      00035C C1               [10]  594 	pop	bc
+                                    595 ;c_test.c:129: if(result=='X') puts(win_user);
+      00035D 79               [ 4]  596 	ld	a, c
+      00035E D6 58            [ 7]  597 	sub	a, #0x58
+      000360 20 06            [12]  598 	jr	NZ, 00116$
+      000362 21rBDr00         [10]  599 	ld	hl, #_win_user
+      000365 C3r03r00         [10]  600 	jp	_puts
+      000368                        601 00116$:
+                                    602 ;c_test.c:130: else if(result=='O') puts(win_cpu);
+      000368 79               [ 4]  603 	ld	a, c
+      000369 D6 4F            [ 7]  604 	sub	a, #0x4f
+      00036B 20 06            [12]  605 	jr	NZ, 00113$
+      00036D 21rC8r00         [10]  606 	ld	hl, #_win_cpu
+      000370 C3r03r00         [10]  607 	jp	_puts
+      000373                        608 00113$:
+                                    609 ;c_test.c:131: else puts(draw_msg);
+      000373 21rD4r00         [10]  610 	ld	hl, #_draw_msg
+                                    611 ;c_test.c:132: return;
+                                    612 ;c_test.c:135: }
+      000376 C3r03r00         [10]  613 	jp	_puts
+                                    614 	.area _CSTUB
+                                    615 	.area _INITIALIZER
+                                    616 	.area _CABS (ABS)

@@ -1,0 +1,81 @@
+XL3
+H D areas 9 global symbols
+M crt0
+S _main Ref000000
+S _serial_isr Ref000000
+S _serial_char_available Ref000000
+S .__.ABS. Def000000
+S _serial_getc Ref000000
+S _serial_putc Ref000000
+A _CODE size 1F flags 0 addr 0
+S __clock Def00001B
+S _exit Def00001D
+A _HEADER size 0 flags 8 addr 0
+A _HEADER0 size 4 flags 8 addr 0
+A _HEADER1 size 3 flags 8 addr 8
+A _HEADER2 size 3 flags 8 addr 10
+A _HEADER3 size 3 flags 8 addr 18
+A _HEADER4 size 3 flags 8 addr 38
+A _HOME size 0 flags 0 addr 0
+A _GSINIT size 0 flags 0 addr 0
+S gsinit Def000000
+A _GSFINAL size 1 flags 0 addr 0
+A _DATA size 0 flags 0 addr 0
+A _BSS size 0 flags 0 addr 0
+A _HEAP size 0 flags 0 addr 0
+T 00 00 00
+R 00 00 02 00
+T 00 00 00 F3 C3 00 00
+R 00 00 02 00 00 05 00 00
+T 08 00 00
+R 00 00 03 00
+T 08 00 00 C3 0D 00
+R 00 00 03 00 00 04 00 00
+T 10 00 00
+R 00 00 04 00
+T 10 00 00 C3 13 00
+R 00 00 04 00 00 04 00 00
+T 18 00 00
+R 00 00 05 00
+T 18 00 00 C3 17 00
+R 00 00 05 00 00 04 00 00
+T 38 00 00
+R 00 00 06 00
+T 38 00 00 C3 00 00
+R 00 00 06 00 02 04 01 00
+T 00 00 00
+R 00 00 00 00
+T 00 00 00 31 FF FF CD 00 00 CD 00 00
+R 00 00 00 00 00 07 08 00 02 0A 00 00
+T 09 00 00
+R 00 00 00 00
+T 09 00 00 F3
+R 00 00 00 00
+T 0A 00 00
+R 00 00 00 00
+T 0A 00 00 76 18 FD
+R 00 00 00 00
+T 0D 00 00
+R 00 00 00 00
+T 0D 00 00 F5 CD 00 00 F1 C9
+R 00 00 00 00 02 05 05 00
+T 13 00 00
+R 00 00 00 00
+T 13 00 00 CD 00 00 C9
+R 00 00 00 00 02 04 04 00
+T 17 00 00
+R 00 00 00 00
+T 17 00 00 CD 00 00 C9
+R 00 00 00 00 02 04 02 00
+T 1B 00 00
+R 00 00 00 00
+T 1B 00 00 AF C9
+R 00 00 00 00
+T 1D 00 00
+R 00 00 00 00
+T 1D 00 00 18 EB
+R 00 00 00 00
+T 00 00 00
+R 00 00 08 00
+T 00 00 00 C9
+R 00 00 09 00

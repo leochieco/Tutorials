@@ -1,0 +1,24 @@
+XL3
+H 9 areas 3 global symbols
+M io
+O -mz80
+S .__.ABS. Def000000
+A _CODE size 9 flags 0 addr 0
+S _inb Def000000
+S _outb Def000004
+A _DATA size 0 flags 0 addr 0
+A _INITIALIZED size 0 flags 0 addr 0
+A _DABS size 0 flags 8 addr 0
+A _HOME size 0 flags 0 addr 0
+A _GSINIT size 0 flags 0 addr 0
+A _GSFINAL size 0 flags 0 addr 0
+A _INITIALIZER size 0 flags 0 addr 0
+A _CABS size 0 flags 8 addr 0
+T 00 00 00
+R 00 00 00 00
+T 00 00 00 4F ED 78 C9
+R 00 00 00 00
+T 04 00 00
+R 00 00 00 00
+T 04 00 00 4F 7D ED 79 C9
+R 00 00 00 00

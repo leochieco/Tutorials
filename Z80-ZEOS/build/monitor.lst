@@ -1,0 +1,1569 @@
+                                      1 ;--------------------------------------------------------
+                                      2 ; File Created by SDCC : free open source ISO C Compiler 
+                                      3 ; Version 4.3.0 #14184 (MINGW64)
+                                      4 ;--------------------------------------------------------
+                                      5 	.module monitor
+                                      6 	.optsdcc -mz80
+                                      7 	
+                                      8 ;--------------------------------------------------------
+                                      9 ; Public variables in this module
+                                     10 ;--------------------------------------------------------
+                                     11 	.globl _monitor
+                                     12 	.globl _toupper
+                                     13 	.globl _serial_putc
+                                     14 	.globl _serial_getc
+                                     15 ;--------------------------------------------------------
+                                     16 ; special function registers
+                                     17 ;--------------------------------------------------------
+                                     18 ;--------------------------------------------------------
+                                     19 ; ram data
+                                     20 ;--------------------------------------------------------
+                                     21 	.area _DATA
+                                     22 ;--------------------------------------------------------
+                                     23 ; ram data
+                                     24 ;--------------------------------------------------------
+                                     25 	.area _INITIALIZED
+                                     26 ;--------------------------------------------------------
+                                     27 ; absolute external ram data
+                                     28 ;--------------------------------------------------------
+                                     29 	.area _DABS (ABS)
+                                     30 ;--------------------------------------------------------
+                                     31 ; global & static initialisations
+                                     32 ;--------------------------------------------------------
+                                     33 	.area _HOME
+                                     34 	.area _GSINIT
+                                     35 	.area _GSFINAL
+                                     36 	.area _GSINIT
+                                     37 ;--------------------------------------------------------
+                                     38 ; Home
+                                     39 ;--------------------------------------------------------
+                                     40 	.area _HOME
+                                     41 	.area _HOME
+                                     42 ;--------------------------------------------------------
+                                     43 ; code
+                                     44 ;--------------------------------------------------------
+                                     45 	.area _CODE
+                                     46 ;monitor.c:48: static void puts(const char *s) {
+                                     47 ;	---------------------------------
+                                     48 ; Function puts
+                                     49 ; ---------------------------------
+      000000                         50 _puts:
+                                     51 ;monitor.c:49: while (*s) serial_putc(*s++);
+      000000                         52 00101$:
+      000000 7E               [ 7]   53 	ld	a, (hl)
+      000001 B7               [ 4]   54 	or	a, a
+      000002 C8               [11]   55 	ret	Z
+      000003 23               [ 6]   56 	inc	hl
+      000004 4F               [ 4]   57 	ld	c, a
+      000005 E5               [11]   58 	push	hl
+      000006 79               [ 4]   59 	ld	a, c
+      000007 CDr00r00         [17]   60 	call	_serial_putc
+      00000A E1               [10]   61 	pop	hl
+                                     62 ;monitor.c:50: }
+      00000B 18 F3            [12]   63 	jr	00101$
+      00000D                         64 _logo:
+      00000D 0C                      65 	.db 0x0c
+      00000E 0D                      66 	.db 0x0d
+      00000F 0A                      67 	.db 0x0a
+      000010 20 20 2B 2D 2D 2D 2D    68 	.ascii "  +-------------------+ "
+             2D 2D 2D 2D 2D 2D 2D
+             2D 2D 2D 2D 2D 2D 2D
+             2D 2B 20
+      000028 0D                      69 	.db 0x0d
+      000029 0A                      70 	.db 0x0a
+      00002A 20 20 7C 20 5A 45 4F    71 	.ascii "  | ZEOS MONITOR V1.0 | "
+             53 20 4D 4F 4E 49 54
+             4F 52 20 56 31 2E 30
+             20 7C 20
+      000042 0D                      72 	.db 0x0d
+      000043 0A                      73 	.db 0x0a
+      000044 20 20 2B 2D 2D 2D 2D    74 	.ascii "  +-------------------+ "
+             2D 2D 2D 2D 2D 2D 2D
+             2D 2D 2D 2D 2D 2D 2D
+             2D 2B 20
+      00005C 0D                      75 	.db 0x0d
+      00005D 0A                      76 	.db 0x0a
+      00005E 0D                      77 	.db 0x0d
+      00005F 0A                      78 	.db 0x0a
+      000060 00                      79 	.db 0x00
+      000061                         80 _help:
+      000061 43 6F 6D 6D 61 6E 64    81 	.ascii "Commands:"
+             73 3A
+      00006A 0D                      82 	.db 0x0d
+      00006B 0A                      83 	.db 0x0a
+      00006C 44 20 3C 61 64 64 72    84 	.ascii "D <addr> <len>       : Dump memory in hex + ASCII"
+             3E 20 3C 6C 65 6E 3E
+             20 20 20 20 20 20 20
+             3A 20 44 75 6D 70 20
+             6D 65 6D 6F 72 79 20
+             69 6E 20 68 65 78 20
+             2B 20 41 53 43 49 49
+      00009D 0D                      85 	.db 0x0d
+      00009E 0A                      86 	.db 0x0a
+      00009F 50 20 3C 61 64 64 72    87 	.ascii "P <addr> <v..>       : Poke memory bytes"
+             3E 20 3C 76 2E 2E 3E
+             20 20 20 20 20 20 20
+             3A 20 50 6F 6B 65 20
+             6D 65 6D 6F 72 79 20
+             62 79 74 65 73
+      0000C7 0D                      88 	.db 0x0d
+      0000C8 0A                      89 	.db 0x0a
+      0000C9 46 20 3C 61 64 64 72    90 	.ascii "F <addr> <len> <val> : Fill memory with a value"
+             3E 20 3C 6C 65 6E 3E
+             20 3C 76 61 6C 3E 20
+             3A 20 46 69 6C 6C 20
+             6D 65 6D 6F 72 79 20
+             77 69 74 68 20 61 20
+             76 61 6C 75 65
+      0000F8 0D                      91 	.db 0x0d
+      0000F9 0A                      92 	.db 0x0a
+      0000FA 47 20 3C 61 64 64 72    93 	.ascii "G <addr>             : Jump to address (go)"
+             3E 20 20 20 20 20 20
+             20 20 20 20 20 20 20
+             3A 20 4A 75 6D 70 20
+             74 6F 20 61 64 64 72
+             65 73 73 20 28 67 6F
+             29
+      000125 0D                      94 	.db 0x0d
+      000126 0A                      95 	.db 0x0a
+      000127 4D 20 3C 73 74 61 72    96 	.ascii "M <start> <end> <p..>: Search memory pattern"
+             74 3E 20 3C 65 6E 64
+             3E 20 3C 70 2E 2E 3E
+             3A 20 53 65 61 72 63
+             68 20 6D 65 6D 6F 72
+             79 20 70 61 74 74 65
+             72 6E
+      000153 0D                      97 	.db 0x0d
+      000154 0A                      98 	.db 0x0a
+      000155 58 20 20 20 20 20 20    99 	.ascii "X                    : Reset system"
+             20 20 20 20 20 20 20
+             20 20 20 20 20 20 20
+             3A 20 52 65 73 65 74
+             20 73 79 73 74 65 6D
+      000178 0D                     100 	.db 0x0d
+      000179 0A                     101 	.db 0x0a
+      00017A 48 20 20 20 20 20 20   102 	.ascii "H                    : Show this help"
+             20 20 20 20 20 20 20
+             20 20 20 20 20 20 20
+             3A 20 53 68 6F 77 20
+             74 68 69 73 20 68 65
+             6C 70
+      00019F 0D                     103 	.db 0x0d
+      0001A0 0A                     104 	.db 0x0a
+      0001A1 00                     105 	.db 0x00
+      0001A2                        106 _prompt:
+      0001A2 52 65 61 64 79         107 	.ascii "Ready"
+      0001A7 0D                     108 	.db 0x0d
+      0001A8 0A                     109 	.db 0x0a
+      0001A9 3E 20                  110 	.ascii "> "
+      0001AB 00                     111 	.db 0x00
+      0001AC                        112 _unknown_cmd:
+      0001AC 55 6E 6B 6E 6F 77 6E   113 	.ascii "Unknown command"
+             20 63 6F 6D 6D 61 6E
+             64
+      0001BB 0D                     114 	.db 0x0d
+      0001BC 0A                     115 	.db 0x0a
+      0001BD 00                     116 	.db 0x00
+      0001BE                        117 _invalid_input:
+      0001BE 49 6E 76 61 6C 69 64   118 	.ascii "Invalid input"
+             20 69 6E 70 75 74
+      0001CB 0D                     119 	.db 0x0d
+      0001CC 0A                     120 	.db 0x0a
+      0001CD 00                     121 	.db 0x00
+      0001CE                        122 _done_msg:
+      0001CE 44 6F 6E 65            123 	.ascii "Done"
+      0001D2 0D                     124 	.db 0x0d
+      0001D3 0A                     125 	.db 0x0a
+      0001D4 00                     126 	.db 0x00
+      0001D5                        127 _memory_overflow:
+      0001D5 4D 65 6D 6F 72 79 20   128 	.ascii "Memory overflow"
+             6F 76 65 72 66 6C 6F
+             77
+      0001E4 0D                     129 	.db 0x0d
+      0001E5 0A                     130 	.db 0x0a
+      0001E6 00                     131 	.db 0x00
+                                    132 ;monitor.c:52: static void put_hex(uint8_t b) {
+                                    133 ;	---------------------------------
+                                    134 ; Function put_hex
+                                    135 ; ---------------------------------
+      0001E7                        136 _put_hex:
+      0001E7 CDr00r00         [17]  137 	call	___sdcc_enter_ix
+      0001EA 21 EF FF         [10]  138 	ld	hl, #-17
+      0001ED 39               [11]  139 	add	hl, sp
+      0001EE F9               [ 6]  140 	ld	sp, hl
+      0001EF 4F               [ 4]  141 	ld	c, a
+                                    142 ;monitor.c:53: const char h[] = "0123456789ABCDEF";
+      0001F0 21 00 00         [10]  143 	ld	hl, #0
+      0001F3 39               [11]  144 	add	hl, sp
+      0001F4 EB               [ 4]  145 	ex	de, hl
+      0001F5 3E 30            [ 7]  146 	ld	a, #0x30
+      0001F7 12               [ 7]  147 	ld	(de), a
+      0001F8 DD 36 F0 31      [19]  148 	ld	-16 (ix), #0x31
+      0001FC DD 36 F1 32      [19]  149 	ld	-15 (ix), #0x32
+      000200 DD 36 F2 33      [19]  150 	ld	-14 (ix), #0x33
+      000204 DD 36 F3 34      [19]  151 	ld	-13 (ix), #0x34
+      000208 DD 36 F4 35      [19]  152 	ld	-12 (ix), #0x35
+      00020C DD 36 F5 36      [19]  153 	ld	-11 (ix), #0x36
+      000210 DD 36 F6 37      [19]  154 	ld	-10 (ix), #0x37
+      000214 DD 36 F7 38      [19]  155 	ld	-9 (ix), #0x38
+      000218 DD 36 F8 39      [19]  156 	ld	-8 (ix), #0x39
+      00021C DD 36 F9 41      [19]  157 	ld	-7 (ix), #0x41
+      000220 DD 36 FA 42      [19]  158 	ld	-6 (ix), #0x42
+      000224 DD 36 FB 43      [19]  159 	ld	-5 (ix), #0x43
+      000228 DD 36 FC 44      [19]  160 	ld	-4 (ix), #0x44
+      00022C DD 36 FD 45      [19]  161 	ld	-3 (ix), #0x45
+      000230 DD 36 FE 46      [19]  162 	ld	-2 (ix), #0x46
+      000234 DD 36 FF 00      [19]  163 	ld	-1 (ix), #0x00
+                                    164 ;monitor.c:54: serial_putc(h[b >> 4]);
+      000238 79               [ 4]  165 	ld	a, c
+      000239 07               [ 4]  166 	rlca
+      00023A 07               [ 4]  167 	rlca
+      00023B 07               [ 4]  168 	rlca
+      00023C 07               [ 4]  169 	rlca
+      00023D E6 0F            [ 7]  170 	and	a, #0x0f
+      00023F 6F               [ 4]  171 	ld	l, a
+      000240 26 00            [ 7]  172 	ld	h, #0x00
+      000242 19               [11]  173 	add	hl, de
+      000243 46               [ 7]  174 	ld	b, (hl)
+      000244 C5               [11]  175 	push	bc
+      000245 D5               [11]  176 	push	de
+      000246 78               [ 4]  177 	ld	a, b
+      000247 CDr00r00         [17]  178 	call	_serial_putc
+      00024A D1               [10]  179 	pop	de
+      00024B C1               [10]  180 	pop	bc
+                                    181 ;monitor.c:55: serial_putc(h[b & 0x0F]);
+      00024C 79               [ 4]  182 	ld	a, c
+      00024D E6 0F            [ 7]  183 	and	a, #0x0f
+      00024F 6F               [ 4]  184 	ld	l, a
+                                    185 ;	spillPairReg hl
+                                    186 ;	spillPairReg hl
+      000250 26 00            [ 7]  187 	ld	h, #0x00
+                                    188 ;	spillPairReg hl
+                                    189 ;	spillPairReg hl
+      000252 19               [11]  190 	add	hl, de
+      000253 7E               [ 7]  191 	ld	a, (hl)
+      000254 CDr00r00         [17]  192 	call	_serial_putc
+                                    193 ;monitor.c:56: }
+      000257 DD F9            [10]  194 	ld	sp, ix
+      000259 DD E1            [14]  195 	pop	ix
+      00025B C9               [10]  196 	ret
+                                    197 ;monitor.c:59: static int hexstr_to_uint16(const char *s, uint16_t *val) {
+                                    198 ;	---------------------------------
+                                    199 ; Function hexstr_to_uint16
+                                    200 ; ---------------------------------
+      00025C                        201 _hexstr_to_uint16:
+      00025C DD E5            [15]  202 	push	ix
+      00025E DD 21 00 00      [14]  203 	ld	ix,#0
+      000262 DD 39            [15]  204 	add	ix,sp
+      000264 F5               [11]  205 	push	af
+      000265 E5               [11]  206 	push	hl
+      000266 4B               [ 4]  207 	ld	c, e
+      000267 42               [ 4]  208 	ld	b, d
+                                    209 ;monitor.c:60: uint16_t result = 0;
+      000268 11 00 00         [10]  210 	ld	de, #0x0000
+                                    211 ;monitor.c:62: while (*s) {
+      00026B AF               [ 4]  212 	xor	a, a
+      00026C DD 77 FE         [19]  213 	ld	-2 (ix), a
+      00026F DD 77 FF         [19]  214 	ld	-1 (ix), a
+      000272                        215 00109$:
+      000272 E1               [10]  216 	pop	hl
+      000273 E5               [11]  217 	push	hl
+      000274 7E               [ 7]  218 	ld	a, (hl)
+      000275 B7               [ 4]  219 	or	a, a
+      000276 28 47            [12]  220 	jr	Z, 00111$
+                                    221 ;monitor.c:63: char c = toupper(*s);
+      000278 6F               [ 4]  222 	ld	l, a
+                                    223 ;	spillPairReg hl
+                                    224 ;	spillPairReg hl
+      000279 26 00            [ 7]  225 	ld	h, #0x00
+                                    226 ;	spillPairReg hl
+                                    227 ;	spillPairReg hl
+      00027B C5               [11]  228 	push	bc
+      00027C D5               [11]  229 	push	de
+      00027D CDr00r00         [17]  230 	call	_toupper
+      000280 EB               [ 4]  231 	ex	de, hl
+      000281 D1               [10]  232 	pop	de
+      000282 C1               [10]  233 	pop	bc
+                                    234 ;monitor.c:65: if (c >= '0' && c <= '9') nibble = c - '0';
+      000283 65               [ 4]  235 	ld	h, l
+                                    236 ;	spillPairReg hl
+                                    237 ;	spillPairReg hl
+      000284 7D               [ 4]  238 	ld	a, l
+      000285 D6 30            [ 7]  239 	sub	a, #0x30
+      000287 38 0A            [12]  240 	jr	C, 00106$
+      000289 3E 39            [ 7]  241 	ld	a, #0x39
+      00028B 95               [ 4]  242 	sub	a, l
+      00028C 38 05            [12]  243 	jr	C, 00106$
+      00028E 7C               [ 4]  244 	ld	a, h
+      00028F C6 D0            [ 7]  245 	add	a, #0xd0
+      000291 18 0D            [12]  246 	jr	00107$
+      000293                        247 00106$:
+                                    248 ;monitor.c:66: else if (c >= 'A' && c <= 'F') nibble = c - 'A' + 10;
+      000293 7D               [ 4]  249 	ld	a, l
+      000294 D6 41            [ 7]  250 	sub	a, #0x41
+      000296 38 27            [12]  251 	jr	C, 00111$
+      000298 3E 46            [ 7]  252 	ld	a, #0x46
+      00029A 95               [ 4]  253 	sub	a, l
+      00029B 38 22            [12]  254 	jr	C, 00111$
+      00029D 7C               [ 4]  255 	ld	a, h
+      00029E C6 C9            [ 7]  256 	add	a, #0xc9
+                                    257 ;monitor.c:67: else break;
+      0002A0                        258 00107$:
+                                    259 ;monitor.c:68: result = (result << 4) | nibble;
+      0002A0 EB               [ 4]  260 	ex	de, hl
+      0002A1 29               [11]  261 	add	hl, hl
+      0002A2 29               [11]  262 	add	hl, hl
+      0002A3 29               [11]  263 	add	hl, hl
+      0002A4 29               [11]  264 	add	hl, hl
+      0002A5 EB               [ 4]  265 	ex	de, hl
+      0002A6 2E 00            [ 7]  266 	ld	l, #0x00
+                                    267 ;	spillPairReg hl
+                                    268 ;	spillPairReg hl
+      0002A8 B3               [ 4]  269 	or	a, e
+      0002A9 5F               [ 4]  270 	ld	e, a
+      0002AA 7D               [ 4]  271 	ld	a, l
+      0002AB B2               [ 4]  272 	or	a, d
+      0002AC 57               [ 4]  273 	ld	d, a
+                                    274 ;monitor.c:69: digits++;
+      0002AD DD 34 FE         [23]  275 	inc	-2 (ix)
+      0002B0 20 03            [12]  276 	jr	NZ, 00152$
+      0002B2 DD 34 FF         [23]  277 	inc	-1 (ix)
+      0002B5                        278 00152$:
+                                    279 ;monitor.c:70: s++;
+      0002B5 DD 34 FC         [23]  280 	inc	-4 (ix)
+      0002B8 20 B8            [12]  281 	jr	NZ, 00109$
+      0002BA DD 34 FD         [23]  282 	inc	-3 (ix)
+      0002BD 18 B3            [12]  283 	jr	00109$
+      0002BF                        284 00111$:
+                                    285 ;monitor.c:72: if (digits == 0) return 0;  // conversion failed
+      0002BF DD 7E FF         [19]  286 	ld	a, -1 (ix)
+      0002C2 DD B6 FE         [19]  287 	or	a, -2 (ix)
+      0002C5 20 05            [12]  288 	jr	NZ, 00113$
+      0002C7 11 00 00         [10]  289 	ld	de, #0x0000
+      0002CA 18 08            [12]  290 	jr	00114$
+      0002CC                        291 00113$:
+                                    292 ;monitor.c:73: *val = result;
+      0002CC 7B               [ 4]  293 	ld	a, e
+      0002CD 02               [ 7]  294 	ld	(bc), a
+      0002CE 03               [ 6]  295 	inc	bc
+      0002CF 7A               [ 4]  296 	ld	a, d
+      0002D0 02               [ 7]  297 	ld	(bc), a
+                                    298 ;monitor.c:74: return 1; // OK
+      0002D1 11 01 00         [10]  299 	ld	de, #0x0001
+      0002D4                        300 00114$:
+                                    301 ;monitor.c:75: }
+      0002D4 DD F9            [10]  302 	ld	sp, ix
+      0002D6 DD E1            [14]  303 	pop	ix
+      0002D8 C9               [10]  304 	ret
+                                    305 ;monitor.c:78: static void read_line(char *b, int m) {
+                                    306 ;	---------------------------------
+                                    307 ; Function read_line
+                                    308 ; ---------------------------------
+      0002D9                        309 _read_line:
+      0002D9 DD E5            [15]  310 	push	ix
+      0002DB DD 21 00 00      [14]  311 	ld	ix,#0
+      0002DF DD 39            [15]  312 	add	ix,sp
+      0002E1 F5               [11]  313 	push	af
+      0002E2 F5               [11]  314 	push	af
+      0002E3 F5               [11]  315 	push	af
+      0002E4 DD 75 FE         [19]  316 	ld	-2 (ix), l
+      0002E7 DD 74 FF         [19]  317 	ld	-1 (ix), h
+                                    318 ;monitor.c:80: while (i < m - 1) {
+      0002EA 7B               [ 4]  319 	ld	a, e
+      0002EB C6 FF            [ 7]  320 	add	a, #0xff
+      0002ED DD 77 FA         [19]  321 	ld	-6 (ix), a
+      0002F0 7A               [ 4]  322 	ld	a, d
+      0002F1 CE FF            [ 7]  323 	adc	a, #0xff
+      0002F3 DD 77 FB         [19]  324 	ld	-5 (ix), a
+      0002F6 01 00 00         [10]  325 	ld	bc, #0x0000
+      0002F9                        326 00104$:
+                                    327 ;monitor.c:83: b[i++] = c;
+      0002F9 DD 7E FE         [19]  328 	ld	a, -2 (ix)
+      0002FC 81               [ 4]  329 	add	a, c
+      0002FD DD 77 FC         [19]  330 	ld	-4 (ix), a
+      000300 DD 7E FF         [19]  331 	ld	a, -1 (ix)
+      000303 88               [ 4]  332 	adc	a, b
+      000304 DD 77 FD         [19]  333 	ld	-3 (ix), a
+                                    334 ;monitor.c:80: while (i < m - 1) {
+      000307 79               [ 4]  335 	ld	a, c
+      000308 DD 96 FA         [19]  336 	sub	a, -6 (ix)
+      00030B 78               [ 4]  337 	ld	a, b
+      00030C DD 9E FB         [19]  338 	sbc	a, -5 (ix)
+      00030F E2r14r03         [10]  339 	jp	PO, 00130$
+      000312 EE 80            [ 7]  340 	xor	a, #0x80
+      000314                        341 00130$:
+      000314 F2r36r03         [10]  342 	jp	P, 00106$
+                                    343 ;monitor.c:81: char c = serial_getc();
+      000317 C5               [11]  344 	push	bc
+      000318 CDr00r00         [17]  345 	call	_serial_getc
+      00031B C1               [10]  346 	pop	bc
+                                    347 ;monitor.c:82: if (c == CR || c == LF) break;
+      00031C 5F               [ 4]  348 	ld	e, a
+      00031D D6 0D            [ 7]  349 	sub	a, #0x0d
+      00031F 28 15            [12]  350 	jr	Z, 00106$
+      000321 7B               [ 4]  351 	ld	a, e
+      000322 D6 0A            [ 7]  352 	sub	a, #0x0a
+      000324 28 10            [12]  353 	jr	Z, 00106$
+                                    354 ;monitor.c:83: b[i++] = c;
+      000326 03               [ 6]  355 	inc	bc
+      000327 DD 6E FC         [19]  356 	ld	l, -4 (ix)
+      00032A DD 66 FD         [19]  357 	ld	h, -3 (ix)
+      00032D 73               [ 7]  358 	ld	(hl), e
+                                    359 ;monitor.c:84: serial_putc(c);
+      00032E C5               [11]  360 	push	bc
+      00032F 7B               [ 4]  361 	ld	a, e
+      000330 CDr00r00         [17]  362 	call	_serial_putc
+      000333 C1               [10]  363 	pop	bc
+      000334 18 C3            [12]  364 	jr	00104$
+      000336                        365 00106$:
+                                    366 ;monitor.c:86: b[i] = 0;
+      000336 C1               [10]  367 	pop	bc
+      000337 E1               [10]  368 	pop	hl
+      000338 E5               [11]  369 	push	hl
+      000339 C5               [11]  370 	push	bc
+      00033A 36 00            [10]  371 	ld	(hl), #0x00
+                                    372 ;monitor.c:87: serial_putc(CR); serial_putc(LF);
+      00033C 3E 0D            [ 7]  373 	ld	a, #0x0d
+      00033E CDr00r00         [17]  374 	call	_serial_putc
+      000341 3E 0A            [ 7]  375 	ld	a, #0x0a
+      000343 CDr00r00         [17]  376 	call	_serial_putc
+                                    377 ;monitor.c:88: }
+      000346 DD F9            [10]  378 	ld	sp, ix
+      000348 DD E1            [14]  379 	pop	ix
+      00034A C9               [10]  380 	ret
+                                    381 ;monitor.c:91: static void cmd_dump(const char *a) {
+                                    382 ;	---------------------------------
+                                    383 ; Function cmd_dump
+                                    384 ; ---------------------------------
+      00034B                        385 _cmd_dump:
+      00034B DD E5            [15]  386 	push	ix
+      00034D DD 21 00 00      [14]  387 	ld	ix,#0
+      000351 DD 39            [15]  388 	add	ix,sp
+      000353 FD 21 EC FF      [14]  389 	ld	iy, #-20
+      000357 FD 39            [15]  390 	add	iy, sp
+      000359 FD F9            [10]  391 	ld	sp, iy
+      00035B DD 75 FC         [19]  392 	ld	-4 (ix), l
+      00035E DD 74 FD         [19]  393 	ld	-3 (ix), h
+                                    394 ;monitor.c:92: uint16_t addr = 0, len = 0;
+      000361 AF               [ 4]  395 	xor	a, a
+      000362 DD 77 EE         [19]  396 	ld	-18 (ix), a
+      000365 DD 77 EF         [19]  397 	ld	-17 (ix), a
+      000368 AF               [ 4]  398 	xor	a, a
+      000369 DD 77 F0         [19]  399 	ld	-16 (ix), a
+      00036C DD 77 F1         [19]  400 	ld	-15 (ix), a
+                                    401 ;monitor.c:94: while (*a == ' ') a++;
+      00036F                        402 00101$:
+      00036F DD 6E FC         [19]  403 	ld	l, -4 (ix)
+      000372 DD 66 FD         [19]  404 	ld	h, -3 (ix)
+      000375 7E               [ 7]  405 	ld	a, (hl)
+      000376 D6 20            [ 7]  406 	sub	a, #0x20
+      000378 20 0A            [12]  407 	jr	NZ, 00157$
+      00037A DD 34 FC         [23]  408 	inc	-4 (ix)
+      00037D 20 F0            [12]  409 	jr	NZ, 00101$
+      00037F DD 34 FD         [23]  410 	inc	-3 (ix)
+      000382 18 EB            [12]  411 	jr	00101$
+      000384                        412 00157$:
+      000384 DD 7E FC         [19]  413 	ld	a, -4 (ix)
+      000387 DD 77 FE         [19]  414 	ld	-2 (ix), a
+      00038A DD 7E FD         [19]  415 	ld	a, -3 (ix)
+      00038D DD 77 FF         [19]  416 	ld	-1 (ix), a
+                                    417 ;monitor.c:95: if (!hexstr_to_uint16(a, &addr)) { puts(invalid_input); return; }
+      000390 21 02 00         [10]  418 	ld	hl, #2
+      000393 39               [11]  419 	add	hl, sp
+      000394 EB               [ 4]  420 	ex	de, hl
+      000395 DD 6E FC         [19]  421 	ld	l, -4 (ix)
+                                    422 ;	spillPairReg hl
+                                    423 ;	spillPairReg hl
+      000398 DD 66 FD         [19]  424 	ld	h, -3 (ix)
+                                    425 ;	spillPairReg hl
+                                    426 ;	spillPairReg hl
+      00039B CDr5Cr02         [17]  427 	call	_hexstr_to_uint16
+      00039E DD 73 FC         [19]  428 	ld	-4 (ix), e
+      0003A1 DD 72 FD         [19]  429 	ld	-3 (ix), d
+      0003A4 7A               [ 4]  430 	ld	a, d
+      0003A5 DD B6 FC         [19]  431 	or	a, -4 (ix)
+      0003A8 20 09            [12]  432 	jr	NZ, 00144$
+      0003AA 21rBEr01         [10]  433 	ld	hl, #_invalid_input
+      0003AD CDr00r00         [17]  434 	call	_puts
+      0003B0 C3r02r05         [10]  435 	jp	00132$
+                                    436 ;monitor.c:97: while (*a && *a != ' ') a++;
+      0003B3                        437 00144$:
+      0003B3 DD 4E FE         [19]  438 	ld	c, -2 (ix)
+      0003B6 DD 46 FF         [19]  439 	ld	b, -1 (ix)
+      0003B9                        440 00107$:
+      0003B9 0A               [ 7]  441 	ld	a, (bc)
+      0003BA B7               [ 4]  442 	or	a, a
+      0003BB 28 07            [12]  443 	jr	Z, 00146$
+      0003BD D6 20            [ 7]  444 	sub	a, #0x20
+      0003BF 28 03            [12]  445 	jr	Z, 00146$
+      0003C1 03               [ 6]  446 	inc	bc
+      0003C2 18 F5            [12]  447 	jr	00107$
+                                    448 ;monitor.c:98: while (*a == ' ') a++;
+      0003C4                        449 00146$:
+      0003C4                        450 00110$:
+      0003C4 0A               [ 7]  451 	ld	a, (bc)
+      0003C5 D6 20            [ 7]  452 	sub	a, #0x20
+      0003C7 20 03            [12]  453 	jr	NZ, 00112$
+      0003C9 03               [ 6]  454 	inc	bc
+      0003CA 18 F8            [12]  455 	jr	00110$
+      0003CC                        456 00112$:
+                                    457 ;monitor.c:99: if (!hexstr_to_uint16(a, &len)) { puts(invalid_input); return; }
+      0003CC 21 04 00         [10]  458 	ld	hl, #4
+      0003CF 39               [11]  459 	add	hl, sp
+      0003D0 EB               [ 4]  460 	ex	de, hl
+      0003D1 69               [ 4]  461 	ld	l, c
+                                    462 ;	spillPairReg hl
+                                    463 ;	spillPairReg hl
+      0003D2 60               [ 4]  464 	ld	h, b
+                                    465 ;	spillPairReg hl
+                                    466 ;	spillPairReg hl
+      0003D3 CDr5Cr02         [17]  467 	call	_hexstr_to_uint16
+      0003D6 7A               [ 4]  468 	ld	a, d
+      0003D7 B3               [ 4]  469 	or	a, e
+      0003D8 20 09            [12]  470 	jr	NZ, 00114$
+      0003DA 21rBEr01         [10]  471 	ld	hl, #_invalid_input
+      0003DD CDr00r00         [17]  472 	call	_puts
+      0003E0 C3r02r05         [10]  473 	jp	00132$
+      0003E3                        474 00114$:
+                                    475 ;monitor.c:102: uint32_t end = (uint32_t)addr + (uint32_t)len - 1;
+      0003E3 E1               [10]  476 	pop	hl
+      0003E4 C1               [10]  477 	pop	bc
+      0003E5 C5               [11]  478 	push	bc
+      0003E6 E5               [11]  479 	push	hl
+      0003E7 11 00 00         [10]  480 	ld	de, #0x0000
+      0003EA DD 7E F0         [19]  481 	ld	a, -16 (ix)
+      0003ED FD E5            [15]  482 	push	iy
+      0003EF E3               [19]  483 	ex	(sp), hl
+      0003F0 DD 66 F1         [19]  484 	ld	h, -15 (ix)
+                                    485 ;	spillPairReg hl
+                                    486 ;	spillPairReg hl
+      0003F3 E3               [19]  487 	ex	(sp), hl
+      0003F4 FD E1            [14]  488 	pop	iy
+      0003F6 21 00 00         [10]  489 	ld	hl, #0x0000
+      0003F9 81               [ 4]  490 	add	a, c
+      0003FA 4F               [ 4]  491 	ld	c, a
+      0003FB FD E5            [15]  492 	push	iy
+      0003FD DD 7E EB         [19]  493 	ld	a, -21 (ix)
+      000400 FD E1            [14]  494 	pop	iy
+      000402 88               [ 4]  495 	adc	a, b
+      000403 47               [ 4]  496 	ld	b, a
+      000404 7D               [ 4]  497 	ld	a, l
+      000405 8B               [ 4]  498 	adc	a, e
+      000406 5F               [ 4]  499 	ld	e, a
+      000407 7C               [ 4]  500 	ld	a, h
+      000408 8A               [ 4]  501 	adc	a, d
+      000409 57               [ 4]  502 	ld	d, a
+      00040A 79               [ 4]  503 	ld	a, c
+      00040B C6 FF            [ 7]  504 	add	a, #0xff
+      00040D 4F               [ 4]  505 	ld	c, a
+      00040E 78               [ 4]  506 	ld	a, b
+      00040F CE FF            [ 7]  507 	adc	a, #0xff
+      000411 47               [ 4]  508 	ld	b, a
+      000412 7B               [ 4]  509 	ld	a, e
+      000413 CE FF            [ 7]  510 	adc	a, #0xff
+      000415 5F               [ 4]  511 	ld	e, a
+      000416 7A               [ 4]  512 	ld	a, d
+      000417 CE FF            [ 7]  513 	adc	a, #0xff
+      000419 57               [ 4]  514 	ld	d, a
+                                    515 ;monitor.c:103: if (end > MAX_MEM) { puts(memory_overflow); return; }
+      00041A 3E FF            [ 7]  516 	ld	a, #0xff
+      00041C B9               [ 4]  517 	cp	a, c
+      00041D 98               [ 4]  518 	sbc	a, b
+      00041E ED 52            [15]  519 	sbc	hl, de
+      000420 30 09            [12]  520 	jr	NC, 00116$
+      000422 21rD5r01         [10]  521 	ld	hl, #_memory_overflow
+      000425 CDr00r00         [17]  522 	call	_puts
+      000428 C3r02r05         [10]  523 	jp	00132$
+      00042B                        524 00116$:
+                                    525 ;monitor.c:105: for (uint16_t i = 0; i < len; i += 8) {
+      00042B AF               [ 4]  526 	xor	a, a
+      00042C DD 77 FC         [19]  527 	ld	-4 (ix), a
+      00042F DD 77 FD         [19]  528 	ld	-3 (ix), a
+      000432                        529 00130$:
+      000432 DD 7E FC         [19]  530 	ld	a, -4 (ix)
+      000435 DD 96 F0         [19]  531 	sub	a, -16 (ix)
+      000438 DD 7E FD         [19]  532 	ld	a, -3 (ix)
+      00043B DD 9E F1         [19]  533 	sbc	a, -15 (ix)
+      00043E D2r02r05         [10]  534 	jp	NC, 00132$
+                                    535 ;monitor.c:107: for (uint8_t j = 0; j < 8; j++) {
+      000441 0E 00            [ 7]  536 	ld	c, #0x00
+      000443                        537 00124$:
+                                    538 ;monitor.c:108: if (i + j < len) {
+      000443 DD 7E FC         [19]  539 	ld	a, -4 (ix)
+      000446 DD 77 FA         [19]  540 	ld	-6 (ix), a
+      000449 DD 7E FD         [19]  541 	ld	a, -3 (ix)
+      00044C DD 77 FB         [19]  542 	ld	-5 (ix), a
+                                    543 ;monitor.c:107: for (uint8_t j = 0; j < 8; j++) {
+                                    544 ;monitor.c:108: if (i + j < len) {
+      00044F 79               [ 4]  545 	ld	a,c
+      000450 FE 08            [ 7]  546 	cp	a,#0x08
+      000452 30 76            [12]  547 	jr	NC, 00120$
+      000454 06 00            [ 7]  548 	ld	b, #0x00
+      000456 DD 77 EC         [19]  549 	ld	-20 (ix), a
+      000459 DD 70 ED         [19]  550 	ld	-19 (ix), b
+      00045C DD 7E FA         [19]  551 	ld	a, -6 (ix)
+      00045F DD 86 EC         [19]  552 	add	a, -20 (ix)
+      000462 47               [ 4]  553 	ld	b, a
+      000463 DD 7E FB         [19]  554 	ld	a, -5 (ix)
+      000466 DD 8E ED         [19]  555 	adc	a, -19 (ix)
+      000469 5F               [ 4]  556 	ld	e, a
+      00046A 78               [ 4]  557 	ld	a, b
+      00046B DD 96 F0         [19]  558 	sub	a, -16 (ix)
+      00046E 7B               [ 4]  559 	ld	a, e
+      00046F DD 9E F1         [19]  560 	sbc	a, -15 (ix)
+      000472 30 40            [12]  561 	jr	NC, 00118$
+                                    562 ;monitor.c:109: uint8_t v = *((uint8_t *)(addr + i + j));
+      000474 DD 7E EE         [19]  563 	ld	a, -18 (ix)
+      000477 DD 86 FC         [19]  564 	add	a, -4 (ix)
+      00047A 5F               [ 4]  565 	ld	e, a
+      00047B DD 7E EF         [19]  566 	ld	a, -17 (ix)
+      00047E DD 8E FD         [19]  567 	adc	a, -3 (ix)
+      000481 57               [ 4]  568 	ld	d, a
+      000482 E1               [10]  569 	pop	hl
+      000483 E5               [11]  570 	push	hl
+      000484 19               [11]  571 	add	hl, de
+      000485 7E               [ 7]  572 	ld	a, (hl)
+                                    573 ;monitor.c:110: put_hex(v); serial_putc(' ');
+      000486 DD 77 FB         [19]  574 	ld	-5 (ix), a
+      000489 C5               [11]  575 	push	bc
+      00048A CDrE7r01         [17]  576 	call	_put_hex
+      00048D 3E 20            [ 7]  577 	ld	a, #0x20
+      00048F CDr00r00         [17]  578 	call	_serial_putc
+      000492 C1               [10]  579 	pop	bc
+                                    580 ;monitor.c:111: ascii[j] = (v >= 0x20 && v <= 0x7E) ? v : '.';
+      000493 59               [ 4]  581 	ld	e, c
+      000494 16 00            [ 7]  582 	ld	d, #0x00
+      000496 21 06 00         [10]  583 	ld	hl, #6
+      000499 39               [11]  584 	add	hl, sp
+      00049A 19               [11]  585 	add	hl, de
+      00049B EB               [ 4]  586 	ex	de, hl
+      00049C DD 7E FB         [19]  587 	ld	a, -5 (ix)
+      00049F D6 20            [ 7]  588 	sub	a, #0x20
+      0004A1 38 0C            [12]  589 	jr	C, 00134$
+      0004A3 3E 7E            [ 7]  590 	ld	a, #0x7e
+      0004A5 DD 96 FB         [19]  591 	sub	a, -5 (ix)
+      0004A8 38 05            [12]  592 	jr	C, 00134$
+      0004AA DD 7E FB         [19]  593 	ld	a, -5 (ix)
+      0004AD 18 02            [12]  594 	jr	00135$
+      0004AF                        595 00134$:
+      0004AF 3E 2E            [ 7]  596 	ld	a, #0x2e
+      0004B1                        597 00135$:
+      0004B1 12               [ 7]  598 	ld	(de), a
+      0004B2 18 12            [12]  599 	jr	00125$
+      0004B4                        600 00118$:
+                                    601 ;monitor.c:113: puts("   "); ascii[j] = ' ';
+      0004B4 C5               [11]  602 	push	bc
+      0004B5 21r07r05         [10]  603 	ld	hl, #___str_8
+      0004B8 CDr00r00         [17]  604 	call	_puts
+      0004BB C1               [10]  605 	pop	bc
+      0004BC 59               [ 4]  606 	ld	e, c
+      0004BD 16 00            [ 7]  607 	ld	d, #0x00
+      0004BF 21 06 00         [10]  608 	ld	hl, #6
+      0004C2 39               [11]  609 	add	hl, sp
+      0004C3 19               [11]  610 	add	hl, de
+      0004C4 36 20            [10]  611 	ld	(hl), #0x20
+      0004C6                        612 00125$:
+                                    613 ;monitor.c:107: for (uint8_t j = 0; j < 8; j++) {
+      0004C6 0C               [ 4]  614 	inc	c
+      0004C7 C3r43r04         [10]  615 	jp	00124$
+      0004CA                        616 00120$:
+                                    617 ;monitor.c:116: puts("    ");
+      0004CA 21r0Br05         [10]  618 	ld	hl, #___str_9
+      0004CD CDr00r00         [17]  619 	call	_puts
+                                    620 ;monitor.c:117: for (uint8_t j = 0; j < 8; j++) serial_putc(ascii[j]);
+      0004D0 0E 00            [ 7]  621 	ld	c, #0x00
+      0004D2                        622 00127$:
+      0004D2 79               [ 4]  623 	ld	a, c
+      0004D3 D6 08            [ 7]  624 	sub	a, #0x08
+      0004D5 30 12            [12]  625 	jr	NC, 00121$
+      0004D7 59               [ 4]  626 	ld	e, c
+      0004D8 16 00            [ 7]  627 	ld	d, #0x00
+      0004DA 21 06 00         [10]  628 	ld	hl, #6
+      0004DD 39               [11]  629 	add	hl, sp
+      0004DE 19               [11]  630 	add	hl, de
+      0004DF 46               [ 7]  631 	ld	b, (hl)
+      0004E0 C5               [11]  632 	push	bc
+      0004E1 78               [ 4]  633 	ld	a, b
+      0004E2 CDr00r00         [17]  634 	call	_serial_putc
+      0004E5 C1               [10]  635 	pop	bc
+      0004E6 0C               [ 4]  636 	inc	c
+      0004E7 18 E9            [12]  637 	jr	00127$
+      0004E9                        638 00121$:
+                                    639 ;monitor.c:118: puts("\r\n");
+      0004E9 21r10r05         [10]  640 	ld	hl, #___str_10
+      0004EC CDr00r00         [17]  641 	call	_puts
+                                    642 ;monitor.c:105: for (uint16_t i = 0; i < len; i += 8) {
+      0004EF DD 7E FA         [19]  643 	ld	a, -6 (ix)
+      0004F2 C6 08            [ 7]  644 	add	a, #0x08
+      0004F4 DD 77 FC         [19]  645 	ld	-4 (ix), a
+      0004F7 DD 7E FB         [19]  646 	ld	a, -5 (ix)
+      0004FA CE 00            [ 7]  647 	adc	a, #0x00
+      0004FC DD 77 FD         [19]  648 	ld	-3 (ix), a
+      0004FF C3r32r04         [10]  649 	jp	00130$
+      000502                        650 00132$:
+                                    651 ;monitor.c:120: }
+      000502 DD F9            [10]  652 	ld	sp, ix
+      000504 DD E1            [14]  653 	pop	ix
+      000506 C9               [10]  654 	ret
+      000507                        655 ___str_8:
+      000507 20 20 20               656 	.ascii "   "
+      00050A 00                     657 	.db 0x00
+      00050B                        658 ___str_9:
+      00050B 20 20 20 20            659 	.ascii "    "
+      00050F 00                     660 	.db 0x00
+      000510                        661 ___str_10:
+      000510 0D                     662 	.db 0x0d
+      000511 0A                     663 	.db 0x0a
+      000512 00                     664 	.db 0x00
+                                    665 ;monitor.c:124: static void cmd_poke(const char *a) {
+                                    666 ;	---------------------------------
+                                    667 ; Function cmd_poke
+                                    668 ; ---------------------------------
+      000513                        669 _cmd_poke:
+      000513 DD E5            [15]  670 	push	ix
+      000515 DD 21 00 00      [14]  671 	ld	ix,#0
+      000519 DD 39            [15]  672 	add	ix,sp
+      00051B FD 21 F6 FF      [14]  673 	ld	iy, #-10
+      00051F FD 39            [15]  674 	add	iy, sp
+      000521 FD F9            [10]  675 	ld	sp, iy
+      000523 DD 75 FE         [19]  676 	ld	-2 (ix), l
+      000526 DD 74 FF         [19]  677 	ld	-1 (ix), h
+                                    678 ;monitor.c:125: uint16_t addr = 0;
+      000529 21 00 00         [10]  679 	ld	hl, #0x0000
+      00052C E3               [19]  680 	ex	(sp), hl
+                                    681 ;monitor.c:128: while (*a == ' ') a++;
+      00052D                        682 00101$:
+      00052D DD 6E FE         [19]  683 	ld	l, -2 (ix)
+      000530 DD 66 FF         [19]  684 	ld	h, -1 (ix)
+      000533 7E               [ 7]  685 	ld	a, (hl)
+      000534 D6 20            [ 7]  686 	sub	a, #0x20
+      000536 20 0A            [12]  687 	jr	NZ, 00147$
+      000538 DD 34 FE         [23]  688 	inc	-2 (ix)
+      00053B 20 F0            [12]  689 	jr	NZ, 00101$
+      00053D DD 34 FF         [23]  690 	inc	-1 (ix)
+      000540 18 EB            [12]  691 	jr	00101$
+      000542                        692 00147$:
+      000542 DD 7E FE         [19]  693 	ld	a, -2 (ix)
+      000545 DD 77 FA         [19]  694 	ld	-6 (ix), a
+      000548 DD 7E FF         [19]  695 	ld	a, -1 (ix)
+      00054B DD 77 FB         [19]  696 	ld	-5 (ix), a
+                                    697 ;monitor.c:131: if (!hexstr_to_uint16(a, &addr)) { 
+      00054E 21 00 00         [10]  698 	ld	hl, #0
+      000551 39               [11]  699 	add	hl, sp
+      000552 EB               [ 4]  700 	ex	de, hl
+      000553 DD 6E FE         [19]  701 	ld	l, -2 (ix)
+                                    702 ;	spillPairReg hl
+                                    703 ;	spillPairReg hl
+      000556 DD 66 FF         [19]  704 	ld	h, -1 (ix)
+                                    705 ;	spillPairReg hl
+                                    706 ;	spillPairReg hl
+      000559 CDr5Cr02         [17]  707 	call	_hexstr_to_uint16
+      00055C DD 73 FE         [19]  708 	ld	-2 (ix), e
+      00055F DD 72 FF         [19]  709 	ld	-1 (ix), d
+      000562 7A               [ 4]  710 	ld	a, d
+      000563 DD B6 FE         [19]  711 	or	a, -2 (ix)
+      000566 20 09            [12]  712 	jr	NZ, 00135$
+                                    713 ;monitor.c:132: puts(invalid_input); 
+      000568 21rBEr01         [10]  714 	ld	hl, #_invalid_input
+      00056B CDr00r00         [17]  715 	call	_puts
+                                    716 ;monitor.c:133: return; 
+      00056E C3r49r06         [10]  717 	jp	00128$
+                                    718 ;monitor.c:137: while (*a && *a != ' ') a++;
+      000571                        719 00135$:
+      000571 DD 4E FA         [19]  720 	ld	c, -6 (ix)
+      000574 DD 46 FB         [19]  721 	ld	b, -5 (ix)
+      000577                        722 00107$:
+      000577 0A               [ 7]  723 	ld	a, (bc)
+      000578 B7               [ 4]  724 	or	a, a
+      000579 28 07            [12]  725 	jr	Z, 00137$
+      00057B D6 20            [ 7]  726 	sub	a, #0x20
+      00057D 28 03            [12]  727 	jr	Z, 00137$
+      00057F 03               [ 6]  728 	inc	bc
+      000580 18 F5            [12]  729 	jr	00107$
+                                    730 ;monitor.c:138: while (*a == ' ') a++;
+      000582                        731 00137$:
+      000582                        732 00110$:
+      000582 0A               [ 7]  733 	ld	a, (bc)
+      000583 D6 20            [ 7]  734 	sub	a, #0x20
+      000585 20 03            [12]  735 	jr	NZ, 00149$
+      000587 03               [ 6]  736 	inc	bc
+      000588 18 F8            [12]  737 	jr	00110$
+                                    738 ;monitor.c:141: while (*a) {
+      00058A                        739 00149$:
+      00058A DD 71 FA         [19]  740 	ld	-6 (ix), c
+      00058D DD 70 FB         [19]  741 	ld	-5 (ix), b
+      000590 DD 7E F6         [19]  742 	ld	a, -10 (ix)
+      000593 DD 77 FE         [19]  743 	ld	-2 (ix), a
+      000596 DD 7E F7         [19]  744 	ld	a, -9 (ix)
+      000599 DD 77 FF         [19]  745 	ld	-1 (ix), a
+      00059C                        746 00125$:
+      00059C DD 6E FA         [19]  747 	ld	l, -6 (ix)
+      00059F DD 66 FB         [19]  748 	ld	h, -5 (ix)
+      0005A2 7E               [ 7]  749 	ld	a, (hl)
+      0005A3 B7               [ 4]  750 	or	a, a
+      0005A4 CAr43r06         [10]  751 	jp	Z, 00127$
+                                    752 ;monitor.c:142: uint16_t v = 0;
+      0005A7 AF               [ 4]  753 	xor	a, a
+      0005A8 DD 77 F8         [19]  754 	ld	-8 (ix), a
+      0005AB DD 77 F9         [19]  755 	ld	-7 (ix), a
+                                    756 ;monitor.c:145: if (!hexstr_to_uint16(a, &v) || v > 0xFF) { 
+      0005AE 21 02 00         [10]  757 	ld	hl, #2
+      0005B1 39               [11]  758 	add	hl, sp
+      0005B2 EB               [ 4]  759 	ex	de, hl
+      0005B3 DD 6E FA         [19]  760 	ld	l, -6 (ix)
+                                    761 ;	spillPairReg hl
+                                    762 ;	spillPairReg hl
+      0005B6 DD 66 FB         [19]  763 	ld	h, -5 (ix)
+                                    764 ;	spillPairReg hl
+                                    765 ;	spillPairReg hl
+      0005B9 CDr5Cr02         [17]  766 	call	_hexstr_to_uint16
+      0005BC 7A               [ 4]  767 	ld	a, d
+      0005BD B3               [ 4]  768 	or	a, e
+      0005BE 28 0C            [12]  769 	jr	Z, 00113$
+      0005C0 E1               [10]  770 	pop	hl
+      0005C1 C1               [10]  771 	pop	bc
+      0005C2 C5               [11]  772 	push	bc
+      0005C3 E5               [11]  773 	push	hl
+      0005C4 3E FF            [ 7]  774 	ld	a, #0xff
+      0005C6 B9               [ 4]  775 	cp	a, c
+      0005C7 3E 00            [ 7]  776 	ld	a, #0x00
+      0005C9 98               [ 4]  777 	sbc	a, b
+      0005CA 30 08            [12]  778 	jr	NC, 00114$
+      0005CC                        779 00113$:
+                                    780 ;monitor.c:146: puts(invalid_input); 
+      0005CC 21rBEr01         [10]  781 	ld	hl, #_invalid_input
+      0005CF CDr00r00         [17]  782 	call	_puts
+                                    783 ;monitor.c:147: return; 
+      0005D2 18 75            [12]  784 	jr	00128$
+      0005D4                        785 00114$:
+                                    786 ;monitor.c:151: if (addr == MAX_MEM) {
+      0005D4 DD 7E FE         [19]  787 	ld	a, -2 (ix)
+      0005D7 DD 46 FF         [19]  788 	ld	b, -1 (ix)
+      0005DA A0               [ 4]  789 	and	a, b
+      0005DB 3C               [ 4]  790 	inc	a
+      0005DC 20 08            [12]  791 	jr	NZ, 00117$
+                                    792 ;monitor.c:152: puts(memory_overflow);
+      0005DE 21rD5r01         [10]  793 	ld	hl, #_memory_overflow
+      0005E1 CDr00r00         [17]  794 	call	_puts
+                                    795 ;monitor.c:153: return;
+      0005E4 18 63            [12]  796 	jr	00128$
+      0005E6                        797 00117$:
+                                    798 ;monitor.c:157: *((uint8_t *)addr) = (uint8_t)v;
+      0005E6 DD 4E FE         [19]  799 	ld	c, -2 (ix)
+      0005E9 DD 46 FF         [19]  800 	ld	b, -1 (ix)
+      0005EC DD 7E F8         [19]  801 	ld	a, -8 (ix)
+      0005EF 02               [ 7]  802 	ld	(bc), a
+                                    803 ;monitor.c:158: addr++;
+      0005F0 DD 34 FE         [23]  804 	inc	-2 (ix)
+      0005F3 20 03            [12]  805 	jr	NZ, 00227$
+      0005F5 DD 34 FF         [23]  806 	inc	-1 (ix)
+      0005F8                        807 00227$:
+      0005F8 DD 7E FE         [19]  808 	ld	a, -2 (ix)
+      0005FB DD 77 F6         [19]  809 	ld	-10 (ix), a
+      0005FE DD 7E FF         [19]  810 	ld	a, -1 (ix)
+      000601 DD 77 F7         [19]  811 	ld	-9 (ix), a
+                                    812 ;monitor.c:162: while (*a && *a != ' ') a++;
+      000604 DD 4E FA         [19]  813 	ld	c, -6 (ix)
+      000607 DD 46 FB         [19]  814 	ld	b, -5 (ix)
+      00060A                        815 00119$:
+      00060A 0A               [ 7]  816 	ld	a, (bc)
+      00060B B7               [ 4]  817 	or	a, a
+      00060C 28 07            [12]  818 	jr	Z, 00150$
+      00060E D6 20            [ 7]  819 	sub	a, #0x20
+      000610 28 03            [12]  820 	jr	Z, 00150$
+      000612 03               [ 6]  821 	inc	bc
+      000613 18 F5            [12]  822 	jr	00119$
+                                    823 ;monitor.c:163: while (*a == ' ') a++;
+      000615                        824 00150$:
+      000615 DD 71 FA         [19]  825 	ld	-6 (ix), c
+      000618 DD 70 FB         [19]  826 	ld	-5 (ix), b
+      00061B DD 71 FC         [19]  827 	ld	-4 (ix), c
+      00061E DD 70 FD         [19]  828 	ld	-3 (ix), b
+      000621                        829 00122$:
+      000621 DD 6E FC         [19]  830 	ld	l, -4 (ix)
+      000624 DD 66 FD         [19]  831 	ld	h, -3 (ix)
+      000627 7E               [ 7]  832 	ld	a, (hl)
+      000628 D6 20            [ 7]  833 	sub	a, #0x20
+      00062A C2r9Cr05         [10]  834 	jp	NZ,00125$
+      00062D DD 34 FC         [23]  835 	inc	-4 (ix)
+      000630 20 03            [12]  836 	jr	NZ, 00231$
+      000632 DD 34 FD         [23]  837 	inc	-3 (ix)
+      000635                        838 00231$:
+      000635 DD 7E FC         [19]  839 	ld	a, -4 (ix)
+      000638 DD 77 FA         [19]  840 	ld	-6 (ix), a
+      00063B DD 7E FD         [19]  841 	ld	a, -3 (ix)
+      00063E DD 77 FB         [19]  842 	ld	-5 (ix), a
+      000641 18 DE            [12]  843 	jr	00122$
+      000643                        844 00127$:
+                                    845 ;monitor.c:166: puts(done_msg);
+      000643 21rCEr01         [10]  846 	ld	hl, #_done_msg
+      000646 CDr00r00         [17]  847 	call	_puts
+      000649                        848 00128$:
+                                    849 ;monitor.c:167: }
+      000649 DD F9            [10]  850 	ld	sp, ix
+      00064B DD E1            [14]  851 	pop	ix
+      00064D C9               [10]  852 	ret
+                                    853 ;monitor.c:172: static void cmd_fill(const char *a) {
+                                    854 ;	---------------------------------
+                                    855 ; Function cmd_fill
+                                    856 ; ---------------------------------
+      00064E                        857 _cmd_fill:
+      00064E DD E5            [15]  858 	push	ix
+      000650 DD 21 00 00      [14]  859 	ld	ix,#0
+      000654 DD 39            [15]  860 	add	ix,sp
+      000656 FD 21 EE FF      [14]  861 	ld	iy, #-18
+      00065A FD 39            [15]  862 	add	iy, sp
+      00065C FD F9            [10]  863 	ld	sp, iy
+      00065E 4D               [ 4]  864 	ld	c, l
+      00065F 44               [ 4]  865 	ld	b, h
+                                    866 ;monitor.c:173: uint16_t addr = 0, len = 0, val = 0;
+      000660 21 00 00         [10]  867 	ld	hl, #0x0000
+      000663 E3               [19]  868 	ex	(sp), hl
+      000664 AF               [ 4]  869 	xor	a, a
+      000665 DD 77 F0         [19]  870 	ld	-16 (ix), a
+      000668 DD 77 F1         [19]  871 	ld	-15 (ix), a
+      00066B AF               [ 4]  872 	xor	a, a
+      00066C DD 77 F2         [19]  873 	ld	-14 (ix), a
+      00066F DD 77 F3         [19]  874 	ld	-13 (ix), a
+                                    875 ;monitor.c:175: while (*a == ' ') a++;
+      000672                        876 00101$:
+      000672 0A               [ 7]  877 	ld	a, (bc)
+      000673 D6 20            [ 7]  878 	sub	a, #0x20
+      000675 20 03            [12]  879 	jr	NZ, 00151$
+      000677 03               [ 6]  880 	inc	bc
+      000678 18 F8            [12]  881 	jr	00101$
+      00067A                        882 00151$:
+      00067A DD 71 FC         [19]  883 	ld	-4 (ix), c
+      00067D DD 70 FD         [19]  884 	ld	-3 (ix), b
+                                    885 ;monitor.c:176: if (!hexstr_to_uint16(a, &addr)) goto err;
+      000680 21 00 00         [10]  886 	ld	hl, #0
+      000683 39               [11]  887 	add	hl, sp
+      000684 EB               [ 4]  888 	ex	de, hl
+      000685 69               [ 4]  889 	ld	l, c
+                                    890 ;	spillPairReg hl
+                                    891 ;	spillPairReg hl
+      000686 60               [ 4]  892 	ld	h, b
+                                    893 ;	spillPairReg hl
+                                    894 ;	spillPairReg hl
+      000687 CDr5Cr02         [17]  895 	call	_hexstr_to_uint16
+      00068A DD 73 FE         [19]  896 	ld	-2 (ix), e
+      00068D DD 72 FF         [19]  897 	ld	-1 (ix), d
+      000690 7A               [ 4]  898 	ld	a, d
+      000691 DD B6 FE         [19]  899 	or	a, -2 (ix)
+      000694 CArA1r07         [10]  900 	jp	Z, 00128$
+                                    901 ;monitor.c:177: while (*a && *a != ' ') a++;
+      000697 DD 4E FC         [19]  902 	ld	c, -4 (ix)
+      00069A DD 46 FD         [19]  903 	ld	b, -3 (ix)
+      00069D                        904 00107$:
+      00069D 0A               [ 7]  905 	ld	a, (bc)
+      00069E B7               [ 4]  906 	or	a, a
+      00069F 28 07            [12]  907 	jr	Z, 00140$
+      0006A1 D6 20            [ 7]  908 	sub	a, #0x20
+      0006A3 28 03            [12]  909 	jr	Z, 00140$
+      0006A5 03               [ 6]  910 	inc	bc
+      0006A6 18 F5            [12]  911 	jr	00107$
+                                    912 ;monitor.c:178: while (*a == ' ') a++;
+      0006A8                        913 00140$:
+      0006A8                        914 00110$:
+      0006A8 0A               [ 7]  915 	ld	a, (bc)
+      0006A9 D6 20            [ 7]  916 	sub	a, #0x20
+      0006AB 20 03            [12]  917 	jr	NZ, 00153$
+      0006AD 03               [ 6]  918 	inc	bc
+      0006AE 18 F8            [12]  919 	jr	00110$
+      0006B0                        920 00153$:
+      0006B0 DD 71 FE         [19]  921 	ld	-2 (ix), c
+      0006B3 DD 70 FF         [19]  922 	ld	-1 (ix), b
+                                    923 ;monitor.c:179: if (!hexstr_to_uint16(a, &len)) goto err;
+      0006B6 21 02 00         [10]  924 	ld	hl, #2
+      0006B9 39               [11]  925 	add	hl, sp
+      0006BA EB               [ 4]  926 	ex	de, hl
+      0006BB 69               [ 4]  927 	ld	l, c
+                                    928 ;	spillPairReg hl
+                                    929 ;	spillPairReg hl
+      0006BC 60               [ 4]  930 	ld	h, b
+                                    931 ;	spillPairReg hl
+                                    932 ;	spillPairReg hl
+      0006BD CDr5Cr02         [17]  933 	call	_hexstr_to_uint16
+      0006C0 7A               [ 4]  934 	ld	a, d
+      0006C1 B3               [ 4]  935 	or	a, e
+      0006C2 CArA1r07         [10]  936 	jp	Z, 00128$
+                                    937 ;monitor.c:180: while (*a && *a != ' ') a++;
+      0006C5 DD 4E FE         [19]  938 	ld	c, -2 (ix)
+      0006C8 DD 46 FF         [19]  939 	ld	b, -1 (ix)
+      0006CB                        940 00116$:
+      0006CB 0A               [ 7]  941 	ld	a, (bc)
+      0006CC B7               [ 4]  942 	or	a, a
+      0006CD 28 07            [12]  943 	jr	Z, 00145$
+      0006CF D6 20            [ 7]  944 	sub	a, #0x20
+      0006D1 28 03            [12]  945 	jr	Z, 00145$
+      0006D3 03               [ 6]  946 	inc	bc
+      0006D4 18 F5            [12]  947 	jr	00116$
+                                    948 ;monitor.c:181: while (*a == ' ') a++;
+      0006D6                        949 00145$:
+      0006D6                        950 00119$:
+      0006D6 0A               [ 7]  951 	ld	a, (bc)
+      0006D7 D6 20            [ 7]  952 	sub	a, #0x20
+      0006D9 20 03            [12]  953 	jr	NZ, 00121$
+      0006DB 03               [ 6]  954 	inc	bc
+      0006DC 18 F8            [12]  955 	jr	00119$
+      0006DE                        956 00121$:
+                                    957 ;monitor.c:182: if (!hexstr_to_uint16(a, &val) || val > 0xFF) goto err;
+      0006DE 21 04 00         [10]  958 	ld	hl, #4
+      0006E1 39               [11]  959 	add	hl, sp
+      0006E2 EB               [ 4]  960 	ex	de, hl
+      0006E3 69               [ 4]  961 	ld	l, c
+                                    962 ;	spillPairReg hl
+                                    963 ;	spillPairReg hl
+      0006E4 60               [ 4]  964 	ld	h, b
+                                    965 ;	spillPairReg hl
+                                    966 ;	spillPairReg hl
+      0006E5 CDr5Cr02         [17]  967 	call	_hexstr_to_uint16
+      0006E8 7A               [ 4]  968 	ld	a, d
+      0006E9 B3               [ 4]  969 	or	a, e
+      0006EA CArA1r07         [10]  970 	jp	Z, 00128$
+      0006ED DD 4E F2         [19]  971 	ld	c, -14 (ix)
+      0006F0 DD 46 F3         [19]  972 	ld	b, -13 (ix)
+      0006F3 3E FF            [ 7]  973 	ld	a, #0xff
+      0006F5 B9               [ 4]  974 	cp	a, c
+      0006F6 3E 00            [ 7]  975 	ld	a, #0x00
+      0006F8 98               [ 4]  976 	sbc	a, b
+      0006F9 DArA1r07         [10]  977 	jp	C, 00128$
+                                    978 ;monitor.c:184: uint32_t end = (uint32_t)addr + (uint32_t)len - 1;
+      0006FC DD 7E EE         [19]  979 	ld	a, -18 (ix)
+      0006FF DD 77 F4         [19]  980 	ld	-12 (ix), a
+      000702 DD 7E EF         [19]  981 	ld	a, -17 (ix)
+      000705 DD 77 F5         [19]  982 	ld	-11 (ix), a
+      000708 AF               [ 4]  983 	xor	a, a
+      000709 DD 77 F6         [19]  984 	ld	-10 (ix), a
+      00070C DD 77 F7         [19]  985 	ld	-9 (ix), a
+      00070F DD 7E F0         [19]  986 	ld	a, -16 (ix)
+      000712 DD 77 F8         [19]  987 	ld	-8 (ix), a
+      000715 DD 7E F1         [19]  988 	ld	a, -15 (ix)
+      000718 DD 77 F9         [19]  989 	ld	-7 (ix), a
+      00071B AF               [ 4]  990 	xor	a, a
+      00071C DD 77 FA         [19]  991 	ld	-6 (ix), a
+      00071F DD 77 FB         [19]  992 	ld	-5 (ix), a
+      000722 DD 7E F4         [19]  993 	ld	a, -12 (ix)
+      000725 DD 86 F8         [19]  994 	add	a, -8 (ix)
+      000728 DD 77 FC         [19]  995 	ld	-4 (ix), a
+      00072B DD 7E F5         [19]  996 	ld	a, -11 (ix)
+      00072E DD 8E F9         [19]  997 	adc	a, -7 (ix)
+      000731 DD 77 FD         [19]  998 	ld	-3 (ix), a
+      000734 DD 7E F6         [19]  999 	ld	a, -10 (ix)
+      000737 DD 8E FA         [19] 1000 	adc	a, -6 (ix)
+      00073A DD 77 FE         [19] 1001 	ld	-2 (ix), a
+      00073D DD 7E F7         [19] 1002 	ld	a, -9 (ix)
+      000740 DD 8E FB         [19] 1003 	adc	a, -5 (ix)
+      000743 DD 77 FF         [19] 1004 	ld	-1 (ix), a
+      000746 DD 7E FC         [19] 1005 	ld	a, -4 (ix)
+      000749 C6 FF            [ 7] 1006 	add	a, #0xff
+      00074B DD 77 F8         [19] 1007 	ld	-8 (ix), a
+      00074E DD 7E FD         [19] 1008 	ld	a, -3 (ix)
+      000751 CE FF            [ 7] 1009 	adc	a, #0xff
+      000753 DD 77 F9         [19] 1010 	ld	-7 (ix), a
+      000756 DD 7E FE         [19] 1011 	ld	a, -2 (ix)
+      000759 CE FF            [ 7] 1012 	adc	a, #0xff
+      00075B DD 77 FA         [19] 1013 	ld	-6 (ix), a
+      00075E DD 7E FF         [19] 1014 	ld	a, -1 (ix)
+      000761 CE FF            [ 7] 1015 	adc	a, #0xff
+      000763 DD 77 FB         [19] 1016 	ld	-5 (ix), a
+                                   1017 ;monitor.c:185: if (end > MAX_MEM) { puts(memory_overflow); return; }
+      000766 3E FF            [ 7] 1018 	ld	a, #0xff
+      000768 DD BE F8         [19] 1019 	cp	a, -8 (ix)
+      00076B DD 9E F9         [19] 1020 	sbc	a, -7 (ix)
+      00076E 3E 00            [ 7] 1021 	ld	a, #0x00
+      000770 DD 9E FA         [19] 1022 	sbc	a, -6 (ix)
+      000773 3E 00            [ 7] 1023 	ld	a, #0x00
+      000775 DD 9E FB         [19] 1024 	sbc	a, -5 (ix)
+      000778 30 08            [12] 1025 	jr	NC, 00150$
+      00077A 21rD5r01         [10] 1026 	ld	hl, #_memory_overflow
+      00077D CDr00r00         [17] 1027 	call	_puts
+      000780 18 25            [12] 1028 	jr	00132$
+                                   1029 ;monitor.c:187: for (uint16_t i = 0; i < len; i++)
+      000782                       1030 00150$:
+      000782 01 00 00         [10] 1031 	ld	bc, #0x0000
+      000785                       1032 00130$:
+      000785 79               [ 4] 1033 	ld	a, c
+      000786 DD 96 F0         [19] 1034 	sub	a, -16 (ix)
+      000789 78               [ 4] 1035 	ld	a, b
+      00078A DD 9E F1         [19] 1036 	sbc	a, -15 (ix)
+      00078D 30 0A            [12] 1037 	jr	NC, 00127$
+                                   1038 ;monitor.c:188: *((uint8_t *)(addr + i)) = (uint8_t)val;
+      00078F E1               [10] 1039 	pop	hl
+      000790 E5               [11] 1040 	push	hl
+      000791 09               [11] 1041 	add	hl, bc
+      000792 DD 7E F2         [19] 1042 	ld	a, -14 (ix)
+      000795 77               [ 7] 1043 	ld	(hl), a
+                                   1044 ;monitor.c:187: for (uint16_t i = 0; i < len; i++)
+      000796 03               [ 6] 1045 	inc	bc
+      000797 18 EC            [12] 1046 	jr	00130$
+      000799                       1047 00127$:
+                                   1048 ;monitor.c:190: puts(done_msg);
+      000799 21rCEr01         [10] 1049 	ld	hl, #_done_msg
+      00079C CDr00r00         [17] 1050 	call	_puts
+                                   1051 ;monitor.c:191: return;
+      00079F 18 06            [12] 1052 	jr	00132$
+                                   1053 ;monitor.c:192: err:
+      0007A1                       1054 00128$:
+                                   1055 ;monitor.c:193: puts(invalid_input);
+      0007A1 21rBEr01         [10] 1056 	ld	hl, #_invalid_input
+      0007A4 CDr00r00         [17] 1057 	call	_puts
+      0007A7                       1058 00132$:
+                                   1059 ;monitor.c:194: }
+      0007A7 DD F9            [10] 1060 	ld	sp, ix
+      0007A9 DD E1            [14] 1061 	pop	ix
+      0007AB C9               [10] 1062 	ret
+                                   1063 ;monitor.c:199: static void cmd_go(const char *a) {
+                                   1064 ;	---------------------------------
+                                   1065 ; Function cmd_go
+                                   1066 ; ---------------------------------
+      0007AC                       1067 _cmd_go:
+      0007AC DD E5            [15] 1068 	push	ix
+      0007AE DD 21 00 00      [14] 1069 	ld	ix,#0
+      0007B2 DD 39            [15] 1070 	add	ix,sp
+      0007B4 F5               [11] 1071 	push	af
+      0007B5 4D               [ 4] 1072 	ld	c, l
+      0007B6 44               [ 4] 1073 	ld	b, h
+                                   1074 ;monitor.c:200: uint16_t addr = 0;
+      0007B7 21 00 00         [10] 1075 	ld	hl, #0x0000
+      0007BA E3               [19] 1076 	ex	(sp), hl
+                                   1077 ;monitor.c:201: while (*a == ' ') a++;
+      0007BB                       1078 00101$:
+      0007BB 0A               [ 7] 1079 	ld	a, (bc)
+      0007BC D6 20            [ 7] 1080 	sub	a, #0x20
+      0007BE 20 03            [12] 1081 	jr	NZ, 00103$
+      0007C0 03               [ 6] 1082 	inc	bc
+      0007C1 18 F8            [12] 1083 	jr	00101$
+      0007C3                       1084 00103$:
+                                   1085 ;monitor.c:202: if (!hexstr_to_uint16(a, &addr)) { puts(invalid_input); return; }
+      0007C3 21 00 00         [10] 1086 	ld	hl, #0
+      0007C6 39               [11] 1087 	add	hl, sp
+      0007C7 EB               [ 4] 1088 	ex	de, hl
+      0007C8 69               [ 4] 1089 	ld	l, c
+                                   1090 ;	spillPairReg hl
+                                   1091 ;	spillPairReg hl
+      0007C9 60               [ 4] 1092 	ld	h, b
+                                   1093 ;	spillPairReg hl
+                                   1094 ;	spillPairReg hl
+      0007CA CDr5Cr02         [17] 1095 	call	_hexstr_to_uint16
+      0007CD 7A               [ 4] 1096 	ld	a, d
+      0007CE B3               [ 4] 1097 	or	a, e
+      0007CF 20 08            [12] 1098 	jr	NZ, 00105$
+      0007D1 21rBEr01         [10] 1099 	ld	hl, #_invalid_input
+      0007D4 CDr00r00         [17] 1100 	call	_puts
+      0007D7 18 05            [12] 1101 	jr	00106$
+      0007D9                       1102 00105$:
+                                   1103 ;monitor.c:204: ((void (*)(void))addr)();
+      0007D9 E1               [10] 1104 	pop	hl
+      0007DA E5               [11] 1105 	push	hl
+      0007DB CDr00r00         [17] 1106 	call	___sdcc_call_hl
+      0007DE                       1107 00106$:
+                                   1108 ;monitor.c:208: }
+      0007DE F1               [10] 1109 	pop	af
+      0007DF DD E1            [14] 1110 	pop	ix
+      0007E1 C9               [10] 1111 	ret
+                                   1112 ;monitor.c:213: static void cmd_find(const char *a) {
+                                   1113 ;	---------------------------------
+                                   1114 ; Function cmd_find
+                                   1115 ; ---------------------------------
+      0007E2                       1116 _cmd_find:
+      0007E2 DD E5            [15] 1117 	push	ix
+      0007E4 DD 21 00 00      [14] 1118 	ld	ix,#0
+      0007E8 DD 39            [15] 1119 	add	ix,sp
+      0007EA FD 21 EE FF      [14] 1120 	ld	iy, #-18
+      0007EE FD 39            [15] 1121 	add	iy, sp
+      0007F0 FD F9            [10] 1122 	ld	sp, iy
+      0007F2 4D               [ 4] 1123 	ld	c, l
+      0007F3 44               [ 4] 1124 	ld	b, h
+                                   1125 ;monitor.c:214: uint16_t s = 0, e = 0;
+      0007F4 21 00 00         [10] 1126 	ld	hl, #0x0000
+      0007F7 E3               [19] 1127 	ex	(sp), hl
+      0007F8 AF               [ 4] 1128 	xor	a, a
+      0007F9 DD 77 F0         [19] 1129 	ld	-16 (ix), a
+      0007FC DD 77 F1         [19] 1130 	ld	-15 (ix), a
+                                   1131 ;monitor.c:216: while (*a == ' ') a++;
+      0007FF                       1132 00101$:
+      0007FF 0A               [ 7] 1133 	ld	a, (bc)
+      000800 D6 20            [ 7] 1134 	sub	a, #0x20
+      000802 20 03            [12] 1135 	jr	NZ, 00179$
+      000804 03               [ 6] 1136 	inc	bc
+      000805 18 F8            [12] 1137 	jr	00101$
+      000807                       1138 00179$:
+      000807 DD 71 FE         [19] 1139 	ld	-2 (ix), c
+      00080A DD 70 FF         [19] 1140 	ld	-1 (ix), b
+                                   1141 ;monitor.c:217: if (!hexstr_to_uint16(a, &s)) goto err;
+      00080D 21 00 00         [10] 1142 	ld	hl, #0
+      000810 39               [11] 1143 	add	hl, sp
+      000811 EB               [ 4] 1144 	ex	de, hl
+      000812 69               [ 4] 1145 	ld	l, c
+                                   1146 ;	spillPairReg hl
+                                   1147 ;	spillPairReg hl
+      000813 60               [ 4] 1148 	ld	h, b
+                                   1149 ;	spillPairReg hl
+                                   1150 ;	spillPairReg hl
+      000814 CDr5Cr02         [17] 1151 	call	_hexstr_to_uint16
+      000817 7A               [ 4] 1152 	ld	a, d
+      000818 B3               [ 4] 1153 	or	a, e
+      000819 CAr37r09         [10] 1154 	jp	Z, 00142$
+                                   1155 ;monitor.c:218: while (*a && *a != ' ') a++;
+      00081C DD 4E FE         [19] 1156 	ld	c, -2 (ix)
+      00081F DD 46 FF         [19] 1157 	ld	b, -1 (ix)
+      000822                       1158 00107$:
+      000822 0A               [ 7] 1159 	ld	a, (bc)
+      000823 B7               [ 4] 1160 	or	a, a
+      000824 28 07            [12] 1161 	jr	Z, 00157$
+      000826 D6 20            [ 7] 1162 	sub	a, #0x20
+      000828 28 03            [12] 1163 	jr	Z, 00157$
+      00082A 03               [ 6] 1164 	inc	bc
+      00082B 18 F5            [12] 1165 	jr	00107$
+                                   1166 ;monitor.c:219: while (*a == ' ') a++;
+      00082D                       1167 00157$:
+      00082D                       1168 00110$:
+      00082D 0A               [ 7] 1169 	ld	a, (bc)
+      00082E D6 20            [ 7] 1170 	sub	a, #0x20
+      000830 20 03            [12] 1171 	jr	NZ, 00181$
+      000832 03               [ 6] 1172 	inc	bc
+      000833 18 F8            [12] 1173 	jr	00110$
+      000835                       1174 00181$:
+      000835 DD 71 FE         [19] 1175 	ld	-2 (ix), c
+      000838 DD 70 FF         [19] 1176 	ld	-1 (ix), b
+                                   1177 ;monitor.c:220: if (!hexstr_to_uint16(a, &e)) goto err;
+      00083B 21 02 00         [10] 1178 	ld	hl, #2
+      00083E 39               [11] 1179 	add	hl, sp
+      00083F EB               [ 4] 1180 	ex	de, hl
+      000840 69               [ 4] 1181 	ld	l, c
+                                   1182 ;	spillPairReg hl
+                                   1183 ;	spillPairReg hl
+      000841 60               [ 4] 1184 	ld	h, b
+                                   1185 ;	spillPairReg hl
+                                   1186 ;	spillPairReg hl
+      000842 CDr5Cr02         [17] 1187 	call	_hexstr_to_uint16
+      000845 7A               [ 4] 1188 	ld	a, d
+      000846 B3               [ 4] 1189 	or	a, e
+      000847 CAr37r09         [10] 1190 	jp	Z, 00142$
+                                   1191 ;monitor.c:221: while (*a && *a != ' ') a++;
+      00084A DD 4E FE         [19] 1192 	ld	c, -2 (ix)
+      00084D DD 46 FF         [19] 1193 	ld	b, -1 (ix)
+      000850                       1194 00116$:
+      000850 0A               [ 7] 1195 	ld	a, (bc)
+      000851 B7               [ 4] 1196 	or	a, a
+      000852 28 07            [12] 1197 	jr	Z, 00162$
+      000854 D6 20            [ 7] 1198 	sub	a, #0x20
+      000856 28 03            [12] 1199 	jr	Z, 00162$
+      000858 03               [ 6] 1200 	inc	bc
+      000859 18 F5            [12] 1201 	jr	00116$
+                                   1202 ;monitor.c:222: while (*a == ' ') a++;
+      00085B                       1203 00162$:
+      00085B                       1204 00119$:
+      00085B 0A               [ 7] 1205 	ld	a, (bc)
+      00085C D6 20            [ 7] 1206 	sub	a, #0x20
+      00085E 20 03            [12] 1207 	jr	NZ, 00183$
+      000860 03               [ 6] 1208 	inc	bc
+      000861 18 F8            [12] 1209 	jr	00119$
+      000863                       1210 00183$:
+                                   1211 ;monitor.c:225: uint8_t plen = 0;
+      000863 DD 36 FC 00      [19] 1212 	ld	-4 (ix), #0x00
+                                   1213 ;monitor.c:226: while (*a && plen < 8) {
+      000867 DD 36 FF 00      [19] 1214 	ld	-1 (ix), #0x00
+      00086B                       1215 00133$:
+      00086B 0A               [ 7] 1216 	ld	a, (bc)
+      00086C B7               [ 4] 1217 	or	a, a
+      00086D 28 5E            [12] 1218 	jr	Z, 00135$
+      00086F DD 7E FF         [19] 1219 	ld	a, -1 (ix)
+      000872 D6 08            [ 7] 1220 	sub	a, #0x08
+      000874 30 57            [12] 1221 	jr	NC, 00135$
+                                   1222 ;monitor.c:227: uint16_t v = 0;
+      000876 AF               [ 4] 1223 	xor	a, a
+      000877 DD 77 FA         [19] 1224 	ld	-6 (ix), a
+      00087A DD 77 FB         [19] 1225 	ld	-5 (ix), a
+                                   1226 ;monitor.c:228: if (!hexstr_to_uint16(a, &v) || v > 0xFF) goto err;
+      00087D 21 0C 00         [10] 1227 	ld	hl, #12
+      000880 39               [11] 1228 	add	hl, sp
+      000881 C5               [11] 1229 	push	bc
+      000882 EB               [ 4] 1230 	ex	de, hl
+      000883 69               [ 4] 1231 	ld	l, c
+                                   1232 ;	spillPairReg hl
+                                   1233 ;	spillPairReg hl
+      000884 60               [ 4] 1234 	ld	h, b
+                                   1235 ;	spillPairReg hl
+                                   1236 ;	spillPairReg hl
+      000885 CDr5Cr02         [17] 1237 	call	_hexstr_to_uint16
+      000888 C1               [10] 1238 	pop	bc
+      000889 7A               [ 4] 1239 	ld	a, d
+      00088A B3               [ 4] 1240 	or	a, e
+      00088B CAr37r09         [10] 1241 	jp	Z, 00142$
+      00088E DD 5E FA         [19] 1242 	ld	e, -6 (ix)
+      000891 DD 56 FB         [19] 1243 	ld	d, -5 (ix)
+      000894 3E FF            [ 7] 1244 	ld	a, #0xff
+      000896 BB               [ 4] 1245 	cp	a, e
+      000897 3E 00            [ 7] 1246 	ld	a, #0x00
+      000899 9A               [ 4] 1247 	sbc	a, d
+      00089A DAr37r09         [10] 1248 	jp	C, 00142$
+                                   1249 ;monitor.c:229: pat[plen++] = v;
+      00089D DD 5E FF         [19] 1250 	ld	e, -1 (ix)
+      0008A0 DD 34 FF         [23] 1251 	inc	-1 (ix)
+      0008A3 DD 7E FF         [19] 1252 	ld	a, -1 (ix)
+      0008A6 DD 77 FC         [19] 1253 	ld	-4 (ix), a
+      0008A9 16 00            [ 7] 1254 	ld	d, #0x00
+      0008AB 21 04 00         [10] 1255 	ld	hl, #4
+      0008AE 39               [11] 1256 	add	hl, sp
+      0008AF 19               [11] 1257 	add	hl, de
+      0008B0 DD 7E FA         [19] 1258 	ld	a, -6 (ix)
+      0008B3 77               [ 7] 1259 	ld	(hl), a
+                                   1260 ;monitor.c:230: while (*a && *a != ' ') a++;
+      0008B4 59               [ 4] 1261 	ld	e, c
+      0008B5 50               [ 4] 1262 	ld	d, b
+      0008B6                       1263 00126$:
+      0008B6 1A               [ 7] 1264 	ld	a, (de)
+      0008B7 B7               [ 4] 1265 	or	a, a
+      0008B8 28 07            [12] 1266 	jr	Z, 00184$
+      0008BA D6 20            [ 7] 1267 	sub	a, #0x20
+      0008BC 28 03            [12] 1268 	jr	Z, 00184$
+      0008BE 13               [ 6] 1269 	inc	de
+      0008BF 18 F5            [12] 1270 	jr	00126$
+                                   1271 ;monitor.c:231: while (*a == ' ') a++;
+      0008C1                       1272 00184$:
+      0008C1 4B               [ 4] 1273 	ld	c, e
+      0008C2 42               [ 4] 1274 	ld	b, d
+      0008C3                       1275 00129$:
+      0008C3 1A               [ 7] 1276 	ld	a, (de)
+      0008C4 D6 20            [ 7] 1277 	sub	a, #0x20
+      0008C6 20 A3            [12] 1278 	jr	NZ, 00133$
+      0008C8 13               [ 6] 1279 	inc	de
+      0008C9 4B               [ 4] 1280 	ld	c, e
+      0008CA 42               [ 4] 1281 	ld	b, d
+      0008CB 18 F6            [12] 1282 	jr	00129$
+      0008CD                       1283 00135$:
+                                   1284 ;monitor.c:234: for (uint16_t i = s; i <= e - plen + 1; i++) {
+      0008CD C1               [10] 1285 	pop	bc
+      0008CE C5               [11] 1286 	push	bc
+      0008CF                       1287 00147$:
+      0008CF DD 5E FC         [19] 1288 	ld	e, -4 (ix)
+      0008D2 16 00            [ 7] 1289 	ld	d, #0x00
+      0008D4 DD 6E F0         [19] 1290 	ld	l, -16 (ix)
+                                   1291 ;	spillPairReg hl
+                                   1292 ;	spillPairReg hl
+      0008D7 DD 66 F1         [19] 1293 	ld	h, -15 (ix)
+                                   1294 ;	spillPairReg hl
+                                   1295 ;	spillPairReg hl
+      0008DA BF               [ 4] 1296 	cp	a, a
+      0008DB ED 52            [15] 1297 	sbc	hl, de
+      0008DD 23               [ 6] 1298 	inc	hl
+      0008DE 59               [ 4] 1299 	ld	e, c
+      0008DF 50               [ 4] 1300 	ld	d, b
+      0008E0 AF               [ 4] 1301 	xor	a, a
+      0008E1 ED 52            [15] 1302 	sbc	hl, de
+      0008E3 38 58            [12] 1303 	jr	C, 00149$
+                                   1304 ;monitor.c:235: uint8_t ok = 1;
+      0008E5 DD 36 FD 01      [19] 1305 	ld	-3 (ix), #0x01
+                                   1306 ;monitor.c:236: for (uint8_t j = 0; j < plen; j++)
+      0008E9 DD 36 FF 00      [19] 1307 	ld	-1 (ix), #0x00
+      0008ED                       1308 00144$:
+      0008ED DD 7E FF         [19] 1309 	ld	a, -1 (ix)
+      0008F0 DD 96 FC         [19] 1310 	sub	a, -4 (ix)
+      0008F3 30 25            [12] 1311 	jr	NC, 00138$
+                                   1312 ;monitor.c:237: if (*((uint8_t *)(i + j)) != pat[j]) ok = 0;
+      0008F5 DD 6E FF         [19] 1313 	ld	l, -1 (ix)
+                                   1314 ;	spillPairReg hl
+                                   1315 ;	spillPairReg hl
+      0008F8 26 00            [ 7] 1316 	ld	h, #0x00
+                                   1317 ;	spillPairReg hl
+                                   1318 ;	spillPairReg hl
+      0008FA 19               [11] 1319 	add	hl, de
+      0008FB 7E               [ 7] 1320 	ld	a, (hl)
+      0008FC DD 77 FE         [19] 1321 	ld	-2 (ix), a
+      0008FF D5               [11] 1322 	push	de
+      000900 DD 5E FF         [19] 1323 	ld	e, -1 (ix)
+      000903 16 00            [ 7] 1324 	ld	d, #0x00
+      000905 21 06 00         [10] 1325 	ld	hl, #6
+      000908 39               [11] 1326 	add	hl, sp
+      000909 19               [11] 1327 	add	hl, de
+      00090A D1               [10] 1328 	pop	de
+                                   1329 ;	spillPairReg hl
+      00090B DD 7E FE         [19] 1330 	ld	a,-2 (ix)
+      00090E 96               [ 7] 1331 	sub	a,(hl)
+      00090F 28 04            [12] 1332 	jr	Z, 00145$
+      000911 DD 36 FD 00      [19] 1333 	ld	-3 (ix), #0x00
+      000915                       1334 00145$:
+                                   1335 ;monitor.c:236: for (uint8_t j = 0; j < plen; j++)
+      000915 DD 34 FF         [23] 1336 	inc	-1 (ix)
+      000918 18 D3            [12] 1337 	jr	00144$
+      00091A                       1338 00138$:
+                                   1339 ;monitor.c:238: if (ok) {
+      00091A DD 7E FD         [19] 1340 	ld	a, -3 (ix)
+      00091D B7               [ 4] 1341 	or	a, a
+      00091E 28 14            [12] 1342 	jr	Z, 00148$
+                                   1343 ;monitor.c:239: put_hex(i >> 8); put_hex(i & 0xFF);
+      000920 58               [ 4] 1344 	ld	e, b
+      000921 C5               [11] 1345 	push	bc
+      000922 7B               [ 4] 1346 	ld	a, e
+      000923 CDrE7r01         [17] 1347 	call	_put_hex
+      000926 C1               [10] 1348 	pop	bc
+      000927 59               [ 4] 1349 	ld	e, c
+      000928 C5               [11] 1350 	push	bc
+      000929 7B               [ 4] 1351 	ld	a, e
+      00092A CDrE7r01         [17] 1352 	call	_put_hex
+      00092D 21r42r09         [10] 1353 	ld	hl, #___str_11
+      000930 CDr00r00         [17] 1354 	call	_puts
+      000933 C1               [10] 1355 	pop	bc
+      000934                       1356 00148$:
+                                   1357 ;monitor.c:234: for (uint16_t i = s; i <= e - plen + 1; i++) {
+      000934 03               [ 6] 1358 	inc	bc
+                                   1359 ;monitor.c:243: return;
+      000935 18 98            [12] 1360 	jr	00147$
+                                   1361 ;monitor.c:244: err:
+      000937                       1362 00142$:
+                                   1363 ;monitor.c:245: puts(invalid_input);
+      000937 21rBEr01         [10] 1364 	ld	hl, #_invalid_input
+      00093A CDr00r00         [17] 1365 	call	_puts
+      00093D                       1366 00149$:
+                                   1367 ;monitor.c:246: }
+      00093D DD F9            [10] 1368 	ld	sp, ix
+      00093F DD E1            [14] 1369 	pop	ix
+      000941 C9               [10] 1370 	ret
+      000942                       1371 ___str_11:
+      000942 0D                    1372 	.db 0x0d
+      000943 0A                    1373 	.db 0x0a
+      000944 00                    1374 	.db 0x00
+                                   1375 ;monitor.c:251: static void cmd_reset(void) {
+                                   1376 ;	---------------------------------
+                                   1377 ; Function cmd_reset
+                                   1378 ; ---------------------------------
+      000945                       1379 _cmd_reset:
+                                   1380 ;monitor.c:253: reset_ptr();
+                                   1381 ;monitor.c:254: }
+      000945 C3 00 00         [10] 1382 	jp	0x0000
+                                   1383 ;monitor.c:260: void monitor(void) {
+                                   1384 ;	---------------------------------
+                                   1385 ; Function monitor
+                                   1386 ; ---------------------------------
+      000948                       1387 _monitor::
+      000948 21 AE FF         [10] 1388 	ld	hl, #-82
+      00094B 39               [11] 1389 	add	hl, sp
+      00094C F9               [ 6] 1390 	ld	sp, hl
+                                   1391 ;monitor.c:261: puts("\n");
+      00094D 21r09r0A         [10] 1392 	ld	hl, #___str_12
+      000950 CDr00r00         [17] 1393 	call	_puts
+                                   1394 ;monitor.c:262: puts(logo);
+      000953 21r0Dr00         [10] 1395 	ld	hl, #_logo
+      000956 CDr00r00         [17] 1396 	call	_puts
+      000959                       1397 00117$:
+                                   1398 ;monitor.c:264: puts(prompt);
+      000959 21rA2r01         [10] 1399 	ld	hl, #_prompt
+      00095C CDr00r00         [17] 1400 	call	_puts
+                                   1401 ;monitor.c:266: read_line(line, 80);
+      00095F 11 50 00         [10] 1402 	ld	de, #0x0050
+      000962 21 00 00         [10] 1403 	ld	hl, #0
+      000965 39               [11] 1404 	add	hl, sp
+      000966 CDrD9r02         [17] 1405 	call	_read_line
+                                   1406 ;monitor.c:268: char *a = line;
+      000969 21 00 00         [10] 1407 	ld	hl, #0
+      00096C 39               [11] 1408 	add	hl, sp
+      00096D EB               [ 4] 1409 	ex	de, hl
+      00096E FD 21 50 00      [14] 1410 	ld	iy, #80
+      000972 FD 39            [15] 1411 	add	iy, sp
+      000974 FD 73 00         [19] 1412 	ld	0 (iy), e
+      000977 FD 72 01         [19] 1413 	ld	1 (iy), d
+                                   1414 ;monitor.c:269: while (*a == ' ') a++;  // skip leading spaces
+      00097A                       1415 00101$:
+      00097A FD 21 50 00      [14] 1416 	ld	iy, #80
+      00097E FD 39            [15] 1417 	add	iy, sp
+      000980 FD 6E 00         [19] 1418 	ld	l, 0 (iy)
+      000983 FD 66 01         [19] 1419 	ld	h, 1 (iy)
+      000986 7E               [ 7] 1420 	ld	a, (hl)
+      000987 FD 5E 00         [19] 1421 	ld	e, 0 (iy)
+      00098A FD 56 01         [19] 1422 	ld	d, 1 (iy)
+      00098D 13               [ 6] 1423 	inc	de
+      00098E FE 20            [ 7] 1424 	cp	a, #0x20
+      000990 20 08            [12] 1425 	jr	NZ, 00103$
+      000992 FD 73 00         [19] 1426 	ld	0 (iy), e
+      000995 FD 72 01         [19] 1427 	ld	1 (iy), d
+      000998 18 E0            [12] 1428 	jr	00101$
+      00099A                       1429 00103$:
+                                   1430 ;monitor.c:270: char c = toupper(*a++);
+      00099A 6F               [ 4] 1431 	ld	l, a
+                                   1432 ;	spillPairReg hl
+                                   1433 ;	spillPairReg hl
+      00099B 26 00            [ 7] 1434 	ld	h, #0x00
+                                   1435 ;	spillPairReg hl
+                                   1436 ;	spillPairReg hl
+      00099D D5               [11] 1437 	push	de
+      00099E CDr00r00         [17] 1438 	call	_toupper
+      0009A1 4B               [ 4] 1439 	ld	c, e
+      0009A2 D1               [10] 1440 	pop	de
+                                   1441 ;monitor.c:271: while (*a == ' ') a++;  // skip space between cmd and params
+      0009A3                       1442 00104$:
+      0009A3 1A               [ 7] 1443 	ld	a, (de)
+      0009A4 D6 20            [ 7] 1444 	sub	a, #0x20
+      0009A6 20 03            [12] 1445 	jr	NZ, 00106$
+      0009A8 13               [ 6] 1446 	inc	de
+      0009A9 18 F8            [12] 1447 	jr	00104$
+      0009AB                       1448 00106$:
+                                   1449 ;monitor.c:273: switch (c) {
+      0009AB 79               [ 4] 1450 	ld	a,c
+      0009AC FE 44            [ 7] 1451 	cp	a,#0x44
+      0009AE 28 1A            [12] 1452 	jr	Z, 00107$
+      0009B0 FE 46            [ 7] 1453 	cp	a,#0x46
+      0009B2 28 22            [12] 1454 	jr	Z, 00109$
+      0009B4 FE 47            [ 7] 1455 	cp	a,#0x47
+      0009B6 28 25            [12] 1456 	jr	Z, 00110$
+      0009B8 FE 48            [ 7] 1457 	cp	a,#0x48
+      0009BA 28 35            [12] 1458 	jr	Z, 00113$
+      0009BC FE 4D            [ 7] 1459 	cp	a,#0x4d
+      0009BE 28 24            [12] 1460 	jr	Z, 00111$
+      0009C0 FE 50            [ 7] 1461 	cp	a,#0x50
+      0009C2 28 0C            [12] 1462 	jr	Z, 00108$
+      0009C4 D6 58            [ 7] 1463 	sub	a, #0x58
+      0009C6 28 23            [12] 1464 	jr	Z, 00112$
+      0009C8 18 30            [12] 1465 	jr	00114$
+                                   1466 ;monitor.c:274: case 'D': cmd_dump(a); break;
+      0009CA                       1467 00107$:
+      0009CA EB               [ 4] 1468 	ex	de, hl
+      0009CB CDr4Br03         [17] 1469 	call	_cmd_dump
+      0009CE 18 89            [12] 1470 	jr	00117$
+                                   1471 ;monitor.c:275: case 'P': cmd_poke(a); break;
+      0009D0                       1472 00108$:
+      0009D0 EB               [ 4] 1473 	ex	de, hl
+      0009D1 CDr13r05         [17] 1474 	call	_cmd_poke
+      0009D4 18 83            [12] 1475 	jr	00117$
+                                   1476 ;monitor.c:276: case 'F': cmd_fill(a); break;
+      0009D6                       1477 00109$:
+      0009D6 EB               [ 4] 1478 	ex	de, hl
+      0009D7 CDr4Er06         [17] 1479 	call	_cmd_fill
+      0009DA C3r59r09         [10] 1480 	jp	00117$
+                                   1481 ;monitor.c:277: case 'G': cmd_go(a); break;
+      0009DD                       1482 00110$:
+      0009DD EB               [ 4] 1483 	ex	de, hl
+      0009DE CDrACr07         [17] 1484 	call	_cmd_go
+      0009E1 C3r59r09         [10] 1485 	jp	00117$
+                                   1486 ;monitor.c:278: case 'M': cmd_find(a); break;
+      0009E4                       1487 00111$:
+      0009E4 EB               [ 4] 1488 	ex	de, hl
+      0009E5 CDrE2r07         [17] 1489 	call	_cmd_find
+      0009E8 C3r59r09         [10] 1490 	jp	00117$
+                                   1491 ;monitor.c:279: case 'X': cmd_reset(); break;
+      0009EB                       1492 00112$:
+      0009EB CDr45r09         [17] 1493 	call	_cmd_reset
+      0009EE C3r59r09         [10] 1494 	jp	00117$
+                                   1495 ;monitor.c:280: case 'H': puts(help); break;
+      0009F1                       1496 00113$:
+      0009F1 21r61r00         [10] 1497 	ld	hl, #_help
+      0009F4 CDr00r00         [17] 1498 	call	_puts
+      0009F7 C3r59r09         [10] 1499 	jp	00117$
+                                   1500 ;monitor.c:281: default: puts(unknown_cmd);
+      0009FA                       1501 00114$:
+      0009FA 21rACr01         [10] 1502 	ld	hl, #_unknown_cmd
+      0009FD CDr00r00         [17] 1503 	call	_puts
+                                   1504 ;monitor.c:282: }
+      000A00 C3r59r09         [10] 1505 	jp	00117$
+                                   1506 ;monitor.c:284: }
+      000A03 21 52 00         [10] 1507 	ld	hl, #82
+      000A06 39               [11] 1508 	add	hl, sp
+      000A07 F9               [ 6] 1509 	ld	sp, hl
+      000A08 C9               [10] 1510 	ret
+      000A09                       1511 ___str_12:
+      000A09 0A                    1512 	.db 0x0a
+      000A0A 00                    1513 	.db 0x00
+                                   1514 	.area _CODE
+                                   1515 	.area _INITIALIZER
+                                   1516 	.area _CABS (ABS)

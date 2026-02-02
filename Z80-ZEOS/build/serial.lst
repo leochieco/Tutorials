@@ -1,0 +1,215 @@
+                                      1 ;--------------------------------------------------------
+                                      2 ; File Created by SDCC : free open source ISO C Compiler 
+                                      3 ; Version 4.3.0 #14184 (MINGW64)
+                                      4 ;--------------------------------------------------------
+                                      5 	.module serial
+                                      6 	.optsdcc -mz80
+                                      7 	
+                                      8 ;--------------------------------------------------------
+                                      9 ; Public variables in this module
+                                     10 ;--------------------------------------------------------
+                                     11 	.globl _outb
+                                     12 	.globl _inb
+                                     13 	.globl _serial_init
+                                     14 	.globl _serial_isr
+                                     15 	.globl _serial_char_available
+                                     16 	.globl _serial_getc
+                                     17 	.globl _serial_putc
+                                     18 ;--------------------------------------------------------
+                                     19 ; special function registers
+                                     20 ;--------------------------------------------------------
+                                     21 ;--------------------------------------------------------
+                                     22 ; ram data
+                                     23 ;--------------------------------------------------------
+                                     24 	.area _DATA
+      000000                         25 _buf:
+      000000                         26 	.ds 64
+                                     27 ;--------------------------------------------------------
+                                     28 ; ram data
+                                     29 ;--------------------------------------------------------
+                                     30 	.area _INITIALIZED
+      000000                         31 _inPtr:
+      000000                         32 	.ds 1
+      000001                         33 _rdPtr:
+      000001                         34 	.ds 1
+      000002                         35 _used:
+      000002                         36 	.ds 1
+                                     37 ;--------------------------------------------------------
+                                     38 ; absolute external ram data
+                                     39 ;--------------------------------------------------------
+                                     40 	.area _DABS (ABS)
+                                     41 ;--------------------------------------------------------
+                                     42 ; global & static initialisations
+                                     43 ;--------------------------------------------------------
+                                     44 	.area _HOME
+                                     45 	.area _GSINIT
+                                     46 	.area _GSFINAL
+                                     47 	.area _GSINIT
+                                     48 ;--------------------------------------------------------
+                                     49 ; Home
+                                     50 ;--------------------------------------------------------
+                                     51 	.area _HOME
+                                     52 	.area _HOME
+                                     53 ;--------------------------------------------------------
+                                     54 ; code
+                                     55 ;--------------------------------------------------------
+                                     56 	.area _CODE
+                                     57 ;serial.c:34: void serial_init(void)
+                                     58 ;	---------------------------------
+                                     59 ; Function serial_init
+                                     60 ; ---------------------------------
+      000000                         61 _serial_init::
+                                     62 ;serial.c:36: outb(ACIA_CTRL, RTS_LOW);
+      000000 2E 96            [ 7]   63 	ld	l, #0x96
+                                     64 ;	spillPairReg hl
+                                     65 ;	spillPairReg hl
+      000002 3E 80            [ 7]   66 	ld	a, #0x80
+                                     67 ;serial.c:37: }
+      000004 C3r00r00         [10]   68 	jp	_outb
+                                     69 ;serial.c:43: void serial_isr(void) __interrupt
+                                     70 ;	---------------------------------
+                                     71 ; Function serial_isr
+                                     72 ; ---------------------------------
+      000007                         73 _serial_isr::
+      000007 FB               [ 4]   74 	ei
+      000008 F5               [11]   75 	push	af
+      000009 C5               [11]   76 	push	bc
+      00000A D5               [11]   77 	push	de
+      00000B E5               [11]   78 	push	hl
+      00000C FD E5            [15]   79 	push	iy
+                                     80 ;serial.c:45: uint8_t status = inb(ACIA_CTRL);
+      00000E 3E 80            [ 7]   81 	ld	a, #0x80
+      000010 CDr00r00         [17]   82 	call	_inb
+                                     83 ;serial.c:47: if (status & 0x01) {
+      000013 0F               [ 4]   84 	rrca
+      000014 30 39            [12]   85 	jr	NC, 00107$
+                                     86 ;serial.c:48: uint8_t c = inb(ACIA_DATA);
+      000016 3E 81            [ 7]   87 	ld	a, #0x81
+      000018 CDr00r00         [17]   88 	call	_inb
+      00001B 4F               [ 4]   89 	ld	c, a
+                                     90 ;serial.c:50: if (used < SER_BUFSIZE) {
+      00001C 3Ar02r00         [13]   91 	ld	a, (_used+0)
+      00001F D6 3F            [ 7]   92 	sub	a, #0x3f
+      000021 30 2C            [12]   93 	jr	NC, 00107$
+                                     94 ;serial.c:51: buf[inPtr++] = c;
+      000023 3Ar00r00         [13]   95 	ld	a, (_inPtr+0)
+      000026 5F               [ 4]   96 	ld	e, a
+      000027 3C               [ 4]   97 	inc	a
+      000028 32r00r00         [13]   98 	ld	(_inPtr+0), a
+      00002B 21r00r00         [10]   99 	ld	hl, #_buf
+      00002E 16 00            [ 7]  100 	ld	d, #0x00
+      000030 19               [11]  101 	add	hl, de
+      000031 71               [ 7]  102 	ld	(hl), c
+                                    103 ;serial.c:52: inPtr &= SER_BUFSIZE;
+      000032 3Ar00r00         [13]  104 	ld	a, (_inPtr+0)
+      000035 E6 3F            [ 7]  105 	and	a, #0x3f
+      000037 32r00r00         [13]  106 	ld	(_inPtr+0), a
+                                    107 ;serial.c:53: used++;
+      00003A 3Ar02r00         [13]  108 	ld	a, (_used+0)
+      00003D 3C               [ 4]  109 	inc	a
+      00003E 32r02r00         [13]  110 	ld	(_used+0), a
+                                    111 ;serial.c:55: if (used >= SER_FULLSIZE)
+      000041 3Ar02r00         [13]  112 	ld	a, (_used+0)
+      000044 D6 30            [ 7]  113 	sub	a, #0x30
+      000046 38 07            [12]  114 	jr	C, 00107$
+                                    115 ;serial.c:56: outb(ACIA_CTRL, RTS_HIGH);
+      000048 2E D6            [ 7]  116 	ld	l, #0xd6
+                                    117 ;	spillPairReg hl
+                                    118 ;	spillPairReg hl
+      00004A 3E 80            [ 7]  119 	ld	a, #0x80
+      00004C CDr00r00         [17]  120 	call	_outb
+      00004F                        121 00107$:
+                                    122 ;serial.c:59: }
+      00004F FD E1            [14]  123 	pop	iy
+      000051 E1               [10]  124 	pop	hl
+      000052 D1               [10]  125 	pop	de
+      000053 C1               [10]  126 	pop	bc
+      000054 F1               [10]  127 	pop	af
+      000055 ED 4D            [14]  128 	reti
+                                    129 ;serial.c:66: uint8_t serial_char_available(void)
+                                    130 ;	---------------------------------
+                                    131 ; Function serial_char_available
+                                    132 ; ---------------------------------
+      000057                        133 _serial_char_available::
+                                    134 ;serial.c:68: return used;
+      000057 3Ar02r00         [13]  135 	ld	a, (_used+0)
+                                    136 ;serial.c:69: }
+      00005A C9               [10]  137 	ret
+                                    138 ;serial.c:75: uint8_t serial_getc(void)
+                                    139 ;	---------------------------------
+                                    140 ; Function serial_getc
+                                    141 ; ---------------------------------
+      00005B                        142 _serial_getc::
+                                    143 ;serial.c:77: while (!used);
+      00005B                        144 00101$:
+      00005B 3Ar02r00         [13]  145 	ld	a, (_used+0)
+      00005E B7               [ 4]  146 	or	a, a
+      00005F 28 FA            [12]  147 	jr	Z, 00101$
+                                    148 ;serial.c:79: uint8_t c = buf[rdPtr++];
+      000061 3Ar01r00         [13]  149 	ld	a, (_rdPtr+0)
+      000064 4F               [ 4]  150 	ld	c, a
+      000065 3C               [ 4]  151 	inc	a
+      000066 32r01r00         [13]  152 	ld	(_rdPtr+0), a
+      000069 21r00r00         [10]  153 	ld	hl, #_buf
+      00006C 06 00            [ 7]  154 	ld	b, #0x00
+      00006E 09               [11]  155 	add	hl, bc
+      00006F 4E               [ 7]  156 	ld	c, (hl)
+                                    157 ;serial.c:80: rdPtr &= SER_BUFSIZE;
+      000070 3Ar01r00         [13]  158 	ld	a, (_rdPtr+0)
+      000073 E6 3F            [ 7]  159 	and	a, #0x3f
+      000075 32r01r00         [13]  160 	ld	(_rdPtr+0), a
+                                    161 ;serial.c:82: __asm di __endasm;
+      000078 F3               [ 4]  162 	di	
+                                    163 ;serial.c:83: used--;
+      000079 3Ar02r00         [13]  164 	ld	a, (_used+0)
+      00007C 21r02r00         [10]  165 	ld	hl, #_used
+      00007F 3D               [ 4]  166 	dec	a
+      000080 77               [ 7]  167 	ld	(hl), a
+                                    168 ;serial.c:84: if (used < SER_EMPTYSIZE)
+      000081 3Ar02r00         [13]  169 	ld	a, (_used+0)
+      000084 D6 05            [ 7]  170 	sub	a, #0x05
+      000086 30 09            [12]  171 	jr	NC, 00105$
+                                    172 ;serial.c:85: outb(ACIA_CTRL, RTS_LOW);
+      000088 C5               [11]  173 	push	bc
+      000089 2E 96            [ 7]  174 	ld	l, #0x96
+                                    175 ;	spillPairReg hl
+                                    176 ;	spillPairReg hl
+      00008B 3E 80            [ 7]  177 	ld	a, #0x80
+      00008D CDr00r00         [17]  178 	call	_outb
+      000090 C1               [10]  179 	pop	bc
+      000091                        180 00105$:
+                                    181 ;serial.c:86: __asm ei __endasm;
+      000091 FB               [ 4]  182 	ei	
+                                    183 ;serial.c:88: return c;
+      000092 79               [ 4]  184 	ld	a, c
+                                    185 ;serial.c:89: }
+      000093 C9               [10]  186 	ret
+                                    187 ;serial.c:96: void serial_putc(uint8_t c)
+                                    188 ;	---------------------------------
+                                    189 ; Function serial_putc
+                                    190 ; ---------------------------------
+      000094                        191 _serial_putc::
+      000094 6F               [ 4]  192 	ld	l, a
+                                    193 ;	spillPairReg hl
+                                    194 ;	spillPairReg hl
+                                    195 ;serial.c:98: while (!(inb(ACIA_CTRL) & 0x02));
+      000095                        196 00101$:
+      000095 E5               [11]  197 	push	hl
+      000096 3E 80            [ 7]  198 	ld	a, #0x80
+      000098 CDr00r00         [17]  199 	call	_inb
+      00009B E1               [10]  200 	pop	hl
+      00009C CB 4F            [ 8]  201 	bit	1, a
+      00009E 28 F5            [12]  202 	jr	Z, 00101$
+                                    203 ;serial.c:99: outb(ACIA_DATA, c);
+      0000A0 3E 81            [ 7]  204 	ld	a, #0x81
+                                    205 ;serial.c:100: }
+      0000A2 C3r00r00         [10]  206 	jp	_outb
+                                    207 	.area _CODE
+                                    208 	.area _INITIALIZER
+      000000                        209 __xinit__inPtr:
+      000000 00                     210 	.db #0x00	; 0
+      000001                        211 __xinit__rdPtr:
+      000001 00                     212 	.db #0x00	; 0
+      000002                        213 __xinit__used:
+      000002 00                     214 	.db #0x00	; 0
+                                    215 	.area _CABS (ABS)
