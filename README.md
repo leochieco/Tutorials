@@ -31,4 +31,4 @@ You may not use the material for commercial purposes. If you remix, transform, o
 Created and maintained with passion by:
 
 * **Leo Chieco** - [@LinkedIn](https://www.linkedin.com/in/leonardo-chieco-53550b129/)
-* **Project Link:** [[https://github.com/your-username/repo-name](https://github.com/LeoChieco/tutorials)](https://github.com/LeoChieco/tutorials)
+* **Project Link:** [(https://github.com/LeoChieco/tutorials)](https://github.com/LeoChieco/tutorials)
