@@ -2,10 +2,11 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import tensorflow as tf
 
 from scipy.optimize import least_squares
+
 from sklearn.preprocessing import StandardScaler
+from sklearn.neural_network import MLPRegressor
 
 # ============================================================
 # PAGE
@@ -17,25 +18,28 @@ st.set_page_config(
 )
 
 st.title("🔋 Hybrid EIS Digital Twin")
-st.markdown(
-"""
-AI-assisted Electrochemical Impedance Spectroscopy analysis
+
+st.markdown("""
+AI-assisted Electrochemical Impedance Spectroscopy
 with physics-based Levenberg–Marquardt refinement.
-"""
-)
+""")
 
 # ============================================================
-# FREQUENCIES
+# FREQUENCY
 # ============================================================
 
 freq = np.logspace(-3, 4, 200)
 
 # ============================================================
-# EIS MODEL
+# PARALLEL
 # ============================================================
 
 def parallel(a, b):
     return 1 / (1/a + 1/b)
+
+# ============================================================
+# EIS MODEL
+# ============================================================
 
 def eis_model(freq, Rb, L, Rsei, Qsei, Rct, Qel, sigma):
 
@@ -61,19 +65,21 @@ def eis_model(freq, Rb, L, Rsei, Qsei, Rct, Qel, sigma):
     return Rb + ZL + Zsei + Zel
 
 # ============================================================
-# RANDOM PARAMS
+# RANDOM PARAMETERS
 # ============================================================
 
 def random_params():
 
     return np.array([
-        np.random.uniform(0.01, 0.06),   # Rb
-        np.random.uniform(1e-8, 1e-6),   # L
-        np.random.uniform(0.001, 0.02),  # Rsei
-        np.random.uniform(0.05, 1.0),    # Qsei
-        np.random.uniform(0.001, 0.02),  # Rct
-        np.random.uniform(0.5, 3.0),     # Qel
-        np.random.uniform(0.0001, 0.01)  # sigma
+
+        np.random.uniform(0.01, 0.06),      # Rb
+        np.random.uniform(1e-8, 1e-6),      # L
+        np.random.uniform(0.001, 0.02),     # Rsei
+        np.random.uniform(0.05, 1.0),       # Qsei
+        np.random.uniform(0.001, 0.02),     # Rct
+        np.random.uniform(0.5, 3.0),        # Qel
+        np.random.uniform(0.0001, 0.01)     # sigma
+
     ])
 
 # ============================================================
@@ -92,9 +98,16 @@ def make_dataset(N=3000):
 
         Z = eis_model(freq, *p)
 
-        x = np.concatenate([Z.real, Z.imag])
+        x = np.concatenate([
+            Z.real,
+            Z.imag
+        ])
 
-        x += np.random.normal(0, 1e-4, size=x.shape)
+        x += np.random.normal(
+            0,
+            1e-4,
+            size=x.shape
+        )
 
         X.append(x)
         Y.append(p)
@@ -116,29 +129,19 @@ def train_model():
     Xs = sx.fit_transform(X)
     Ys = sy.fit_transform(Y)
 
-    model = tf.keras.Sequential([
+    model = MLPRegressor(
 
-        tf.keras.layers.Dense(256, activation="relu"),
-        tf.keras.layers.Dense(256, activation="relu"),
-        tf.keras.layers.Dense(128, activation="relu"),
-        tf.keras.layers.Dense(64, activation="relu"),
+        hidden_layer_sizes=(256,256,128),
 
-        tf.keras.layers.Dense(7)
+        activation="relu",
 
-    ])
+        max_iter=500,
 
-    model.compile(
-        optimizer="adam",
-        loss="mse"
+        verbose=False
+
     )
 
-    model.fit(
-        Xs,
-        Ys,
-        epochs=20,
-        batch_size=64,
-        verbose=0
-    )
+    model.fit(Xs, Ys)
 
     return model, sx, sy
 
@@ -152,19 +155,22 @@ def ai_predict(x):
 
     xs = sx.transform([x])
 
-    y = model.predict(xs, verbose=0)[0]
+    y = model.predict(xs)
 
-    return sy.inverse_transform([y])[0]
+    return sy.inverse_transform(y)[0]
 
 # ============================================================
-# LM FIT
+# LM
 # ============================================================
 
 def forward(params):
 
     Z = eis_model(freq, *params)
 
-    return np.concatenate([Z.real, Z.imag])
+    return np.concatenate([
+        Z.real,
+        Z.imag
+    ])
 
 def residual(params, y):
 
@@ -173,10 +179,15 @@ def residual(params, y):
 def LM(y, x0):
 
     result = least_squares(
+
         residual,
+
         x0,
+
         args=(y,),
+
         method="lm"
+
     )
 
     return result.x
@@ -224,15 +235,16 @@ sigma = st.sidebar.slider(
 )
 
 noise = st.sidebar.slider(
-    "Noise level",
+    "Noise",
     0.0, 0.001, 0.0001, 0.00001
 )
 
 # ============================================================
-# RUN
+# TRUE PARAMETERS
 # ============================================================
 
 true_params = np.array([
+
     Rb,
     L,
     Rsei,
@@ -240,18 +252,36 @@ true_params = np.array([
     Rct,
     Qel,
     sigma
+
 ])
 
+# ============================================================
 # TRUE EIS
+# ============================================================
+
 Z_true = eis_model(freq, *true_params)
 
-# MEASURED
+# ============================================================
+# NOISE
+# ============================================================
+
 Z_meas = Z_true + (
+
     np.random.randn(len(Z_true))
     + 1j*np.random.randn(len(Z_true))
+
 ) * noise
 
-x = np.concatenate([Z_meas.real, Z_meas.imag])
+# ============================================================
+# FEATURE VECTOR
+# ============================================================
+
+x = np.concatenate([
+
+    Z_meas.real,
+    Z_meas.imag
+
+])
 
 # ============================================================
 # AI
@@ -270,6 +300,7 @@ lm_params = LM(x, ai_params)
 # ============================================================
 
 Z_ai = eis_model(freq, *ai_params)
+
 Z_lm = eis_model(freq, *lm_params)
 
 # ============================================================
@@ -279,35 +310,56 @@ Z_lm = eis_model(freq, *lm_params)
 fig, ax = plt.subplots(figsize=(7,6))
 
 ax.plot(
+
     Z_true.real,
     -Z_true.imag,
+
     color="black",
+
     linewidth=3,
+
     label="True"
+
 )
 
 ax.plot(
+
     Z_ai.real,
     -Z_ai.imag,
+
     "--",
+
     color="red",
+
     linewidth=2,
+
     label="AI"
+
 )
 
 ax.plot(
+
     Z_lm.real,
     -Z_lm.imag,
+
     ":",
+
     color="blue",
+
     linewidth=2,
+
     label="AI + LM"
+
 )
 
 ax.set_xlabel("Z'")
+
 ax.set_ylabel("-Z''")
+
 ax.grid(True, alpha=0.3)
+
 ax.axis("equal")
+
 ax.legend()
 
 st.pyplot(fig)
@@ -317,6 +369,7 @@ st.pyplot(fig)
 # ============================================================
 
 names = [
+
     "Rb",
     "L",
     "Rsei",
@@ -324,6 +377,7 @@ names = [
     "Rct",
     "Qel",
     "sigma"
+
 ]
 
 df = pd.DataFrame({
@@ -337,15 +391,23 @@ df = pd.DataFrame({
     "AI+LM": lm_params,
 
     "AI Error %":
+
         100*np.abs(
-            (ai_params-true_params)
-            /(true_params+1e-20)
+
+            (ai_params - true_params)
+
+            / (true_params + 1e-20)
+
         ),
 
     "LM Error %":
+
         100*np.abs(
-            (lm_params-true_params)
-            /(true_params+1e-20)
+
+            (lm_params - true_params)
+
+            / (true_params + 1e-20)
+
         )
 
 })
@@ -358,8 +420,8 @@ st.dataframe(df, use_container_width=True)
 
 st.markdown("---")
 
-st.markdown(
-"""
+st.markdown("""
+
 Hybrid AI + Physics-based EIS parameter estimation.
-"""
-)
+
+""")
