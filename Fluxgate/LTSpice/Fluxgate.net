@@ -1,0 +1,76 @@
+* =================================================================
+* FLUXGATE SENSOR WITH REALISTIC AD633 INTEGRATION MODEL
+* =================================================================
+* Physical Architecture:
+* 1) Core Excitation: Forced AC magnetic saturation at 20 kHz.
+* 2) Sensing Winding: Induces voltage spikes, then attenuated to fit IC specs.
+* 3) AD633 Multiplier: Multiplies sense signal by 40 kHz reference (divided by 10V).
+* 4) Low-Pass Filter: Extracts the final stabilized DC measurement voltage.
+* =================================================================
+
+* --- CORE GEOMETRY & MAGNETIC PARAMETERS ---
+* Nexc: Number of turns of the excitation winding [dimensionless]
+.param Nexc=50
+* Npick: Number of turns of the pickup/sense winding [dimensionless]
+.param Npick=100
+* Nmeas: Number of turns of the measurement/primary circuit [dimensionless]
+.param Nmeas=1
+* Ae: Effective cross-sectional area of the magnetic core [m^2]
+.param Ae=100u
+* Le: Mean magnetic path length of the core [meters, m]
+.param Le=0.1
+* Bsat: Saturation magnetic flux density of the core material [Tesla, T]
+.param Bsat=0.35
+* Hsat: Saturation magnetic field strength intensity [Ampere/meter, A/m]
+.param Hsat=150
+* R_excitation: Series resistance of the excitation circuit [Ohm]
+.param R_excitation=10
+
+* --- PRIMARY CIRCUIT (CURRENT TO BE MEASURED) ---
+* I_measure: The DC input current passing through the sensor [Ampere, A].
+.param I_measure=0.0
+
+
+* --- AC EXCITATION CIRCUIT (20 kHz) ---
+Vexc exc 0 SINE(0 10 20k)
+Rexc exc 0 {R_excitation}
+
+* --- MAGNETIC BEHAVIORAL CORE EQUATIONS ---
+* Bphi: Calculates the total flux [Weber, Wb] based on Htot (1V=1Wb)
+Bphi phi 0 V = {Ae} * {Bsat} * tanh((( {Nexc}*(V(exc)/{R_excitation}) + ({Nmeas}*{I_measure}) ) / {Le}) / {Hsat})
+
+* --- PICKUP / SENSE CIRCUIT (OUTPUT) ---
+* Faraday's Law of Induction: V_induced = Npick * d(Phi)/dt [Volts, V]
+Epick out_raw 0 VALUE = { {Npick} * ddt(V(phi)) }
+
+* Attenuation network to scale ideal spikes down below +/-10V for the IC
+Eattenuate out 0 VALUE = { V(out_raw) / 10 }
+Rload out 0 1k
+
+* --- SYNCHRONOUS DEMODULATOR STAGE ---
+* Vref: Reference voltage source operating at 2f (40 kHz), 1V Peak amplitude [Volts, V]
+Vref ref 0 SINE(0 1 40k)
+
+* Bmultiplier: Models the transfer function: W = (X * Y) / 10V
+* Integrated with a hard-limit clipper at +/-13.5V to simulate rail saturation (+/-15V supply)
+Bmultiplier v_mult 0 V = limit( (V(out) * V(ref)) / 10, -13.5, 13.5 )
+
+* --- LOW-PASS FILTER (LPF) ---
+* Cutoff frequency: f_c = 1 / (2 * pi * Rf * Cf) ~= 159 Hz
+Rf v_mult v_dc 10k
+Cf v_dc 0 100n
+
+* --- MONITORING NODES FOR B-H GRAPH PLOTTING ---
+Bh h_test 0 V = ( {Nexc}*(V(exc)/{R_excitation}) + ({Nmeas}*{I_measure}) ) / {Le}
+Bb b_test 0 V = {Bsat} * tanh(V(h_test) / {Hsat})
+
+
+* --- HIGH-PRECISION SIMULATION SETTINGS ---
+.tran 0 5m 4.8m 10n
+.options plotwinsize=0
+.options method=trap
+.options trtol=1
+.options reltol=1e-5
+.options chgtol=1e-15
+
+.end
